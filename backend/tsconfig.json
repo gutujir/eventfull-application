@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    // The JS language version emitted by tsc. Matches features Node supports.
+    "target": "ES2022", // emits ES2022 syntax (e.g., class fields); pick based on Node version
+
+    // Module format for emitted code. "ESNext" emits native ES modules (import/export).
+    "module": "ESNext",
+
+    // How module specifiers are resolved. "bundler" is optimized for ESM/bundlers.
+    "moduleResolution": "bundler",
+
+    // Where compiled JS/CSS/etc. are written.
+    "outDir": "./dist",
+
+    // Root folder for input TS files; preserves folder structure relative to this.
+    "rootDir": "./src",
+
+    // Enables all strict type-checking options (noImplicitAny, strictNullChecks, etc.).
+    "strict": true,
+
+    // Improves interoperability with CommonJS modules allowing `import x from 'cjs'`.
+    "esModuleInterop": true,
+
+    // Skip type-checking of declaration files in node_modules to speed up compile.
+    "skipLibCheck": true,
+
+    // Enforce consistent import path casing to avoid cross-OS problems.
+    "forceConsistentCasingInFileNames": true,
+
+    // Emit source maps alongside compiled JS for easier debugging (maps TS -> JS).
+    "sourceMap": true
+  },
+
+  // ts-node runtime settings when executing TypeScript directly (development).
+  "ts-node": {
+    // Run ts-node in ESM mode so it loads files as ES modules.
+    "esm": true,
+
+    // Use Node's experimental ESM specifier resolution (helps with bare imports).
+    "experimentalSpecifierResolution": "node"
+  },
+
+  // Which files to include in the project (globs). Keeps tsc focused to `src`.
+  "include": ["src/**/*"],
+
+  // Files/folders to exclude from compilation; node_modules is normally excluded.
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*.local
+
+# Build outputs
+dist/
+build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS specific
+.DS_Store
+
+# Tests
+coverage/
+
+# Prisma
+/generated/
+*.db
+*.db-journal
+
+# IDEConfig
+.vscode/
+.idea/
+
+# Local env files
+.env.local
+.env.*.local
+
+# Caches
+.cache
+
+# Test coverage
+coverage/
