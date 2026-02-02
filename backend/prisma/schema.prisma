@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -13,6 +7,36 @@ datasource db {
   provider = "postgresql"
 }
 
+// Enums for status and roles
+enum Role {
+  CREATOR
+  EVENTEE
+  ADMIN
+}
+
+enum TicketStatus {
+  VALID
+  USED      // Scanned
+  REFUNDED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum ReminderType {
+  CREATOR_DEFAULT
+  USER_CUSTOM
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
 model User {
   id         String   @id @default(uuid())
   email      String   @unique
@@ -22,4 +46,132 @@ model User {
   lastLogin  DateTime @default(now())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  // Relations
+  eventsCreated    Event[]         @relation("EventCreator")
+  tickets          Ticket[]        // Tickets this user has bought
+  payments         Payment[]
+  reminders        Reminder[]      // Custom reminders set by the user
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  slug        String   @unique // Stable shareable URL handle
+  status      EventStatus @default(DRAFT)
+  isPublic    Boolean  @default(true)
+  title       String
+  description String
+  location    String
+  date        DateTime
+  imageUrl    String?  // For "Shareability" thumbnails
+  price       Decimal  @default(0.0) // Base price (for single-tier events)
+  currency    String   @default("NGN")
+  capacity    Int?     // Optional limit on attendees
+
+  // Notification Settings
+  // Creator sets default reminder (e.g., 24 hours before) stored in minutes
+  reminderOffsetMinutes Int? @default(1440) 
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId   String
+  creator     User      @relation("EventCreator", fields: [creatorId], references: [id])
+  tickets     Ticket[]
+  payments    Payment[]
+  reminders   Reminder[] // Reminders associated with this event
+  ticketTypes TicketType[]
+
+  // Indexing for faster search/analytics
+  @@index([creatorId])
+  @@index([date])
+  @@index([slug])
+  @@index([status])
+}
+
+model Ticket {
+  id          String       @id @default(uuid())
+  qrCode      String       @unique // The hash/token used for QR generation
+  status      TicketStatus @default(VALID)
+  purchasePrice Decimal    @default(0.0) // Snapshot price at purchase time
+  currency    String       @default("NGN")
+  purchasedAt DateTime     @default(now())
+  
+  // Analytics: Track when they were scanned
+  scannedAt   DateTime?    
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  paymentId   String?
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+  ticketTypeId String?
+  ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([paymentId])
+  @@index([ticketTypeId])
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  amount          Decimal
+  currency        String        @default("NGN")
+  status          PaymentStatus @default(PENDING)
+  reference       String        @unique // Paystack transaction reference
+  paidAt          DateTime?
+  channel         String?
+  metadata        Json?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  eventId         String
+  event           Event         @relation(fields: [eventId], references: [id])
+  tickets         Ticket[]
+
+  @@index([userId])
+  @@index([eventId])
+}
+
+model Reminder {
+  id          String   @id @default(uuid())
+  scheduledAt DateTime // The exact time the notification should be sent
+  isSent      Boolean  @default(false)
+  type        ReminderType @default(USER_CUSTOM)
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+
+  @@index([scheduledAt]) // Crucial for your cron job/scheduler to find pending reminders efficiently
+}
+
+model TicketType {
+  id        String  @id @default(uuid())
+  name      String
+  description String?
+  price     Decimal
+  currency  String  @default("NGN")
+  capacity  Int?
+
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id])
+  tickets   Ticket[]
+
+  @@index([eventId])
 }
