@@ -3,15 +3,7 @@ import { z } from "zod";
 import * as authService from "../services/auth.service";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie";
 import * as authDal from "../dal/auth.dal";
-
-const signupSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-  first_name: z
-    .string()
-    .min(2, "First name must be at least 2 characters long"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters long"),
-});
+import { signupSchema, loginSchema } from "../schemas/auth.schema";
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -41,11 +33,6 @@ export const signup = async (req: Request, res: Response) => {
     }
   }
 };
-
-const loginSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
 
 export const login = async (req: Request, res: Response) => {
   try {
