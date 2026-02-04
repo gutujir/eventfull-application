@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as eventController from "../controllers/event.controller";
 import { verifyToken } from "../middlewares/verifyToken";
 import { requireCreator } from "../middlewares/checkRole";
+import { upload } from "../middlewares/upload";
 
 const router = Router();
 
@@ -11,7 +12,13 @@ router.get("/:id", eventController.getEventById);
 router.get("/slug/:slug", eventController.getEventBySlug);
 
 // Protected routes - creators only
-router.post("/", verifyToken, requireCreator, eventController.createEvent);
+router.post(
+  "/",
+  verifyToken,
+  requireCreator,
+  upload.single("image"),
+  eventController.createEvent,
+);
 router.get(
   "/my/events",
   verifyToken,
@@ -30,5 +37,13 @@ router.patch(
   requireCreator,
   eventController.updateEventStatus,
 );
+router.put(
+  "/:id",
+  verifyToken,
+  requireCreator,
+  upload.single("image"),
+  eventController.updateEvent,
+);
+router.delete("/:id", verifyToken, requireCreator, eventController.deleteEvent);
 
 export default router;

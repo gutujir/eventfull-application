@@ -18,3 +18,10 @@ export const createUser = async (data: Prisma.UserCreateInput) => {
     data,
   });
 };
+
+export const updateUser = async (id: string, data: Prisma.UserUpdateInput) => {
+  return await prisma.user.update({
+    where: { id },
+    data,
+  });
+};

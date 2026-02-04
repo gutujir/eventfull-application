@@ -3,7 +3,11 @@ import { z } from "zod";
 import * as authService from "../services/auth.service";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie";
 import * as authDal from "../dal/auth.dal";
-import { signupSchema, loginSchema } from "../schemas/auth.schema";
+import {
+  signupSchema,
+  loginSchema,
+  updateProfileSchema,
+} from "../schemas/auth.schema";
 import jwt from "jsonwebtoken";
 
 export const signup = async (req: Request, res: Response) => {
@@ -154,5 +158,49 @@ export const logout = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to logout" });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId; // Provided by verifyToken middleware
+
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    // Normalize possible camelCase keys from clients (firstName/lastName) to snake_case
+    const body: any = { ...req.body };
+    if (body.firstName && !body.first_name) body.first_name = body.firstName;
+    if (body.lastName && !body.last_name) body.last_name = body.lastName;
+
+    const validatedData = updateProfileSchema.parse(body);
+
+    const updatedUser = await authService.updateUserProfile(
+      userId,
+      validatedData,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        ...updatedUser,
+        password: undefined,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      res
+        .status(400)
+        .json({ success: false, message: (error as any).errors[0].message });
+    } else if (error instanceof Error) {
+      res.status(400).json({ success: false, message: error.message });
+    } else {
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
   }
 };

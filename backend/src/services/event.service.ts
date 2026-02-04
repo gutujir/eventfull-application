@@ -37,24 +37,93 @@ export const updateEventStatus = async (
   return updatedEvent;
 };
 
-export const getEvents = async () => {
-  // 1. Try to fetch from Redis Cache first
-  const cachedEvents = await redis.get(EVENTS_CACHE_KEY);
-
-  if (cachedEvents) {
-    console.log("Returning events from Cache 🚀");
-    return JSON.parse(cachedEvents);
+export const updateEventDetails = async (
+  eventId: string,
+  userId: string,
+  data: Prisma.EventUpdateInput,
+) => {
+  const event = await eventDal.findEventById(eventId);
+  if (!event) {
+    throw new Error("Event not found");
   }
 
-  // 2. If not in cache, fetch from DB
-  console.log("Fetching events from DB 🐢");
-  const events = await eventDal.findEvents({
+  if (event.creatorId !== userId) {
+    throw new Error("Unauthorized - you are not the creator of this event");
+  }
+
+  const updatedEvent = await eventDal.updateEvent(eventId, data);
+
+  // Clear cache
+  await redis.del(EVENTS_CACHE_KEY);
+  await redis.del(`event:${eventId}`);
+
+  return updatedEvent;
+};
+
+export const deleteEvent = async (eventId: string, userId: string) => {
+  const event = await eventDal.findEventById(eventId);
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  if (event.creatorId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Check for active bookings
+  const activeTicketCount = await eventDal.countActiveTickets(eventId);
+  if (activeTicketCount > 0) {
+    throw new Error(
+      "Cannot delete event with active bookings. Please cancel the event instead.",
+    );
+  }
+
+  return await eventDal.deleteEvent(eventId);
+};
+
+export const getEvents = async (filters?: {
+  search?: string;
+  location?: string;
+}) => {
+  // If there are filters, skip cache for simplistic search implementation
+  const hasFilters = filters?.search || filters?.location;
+
+  if (!hasFilters) {
+    // 1. Try to fetch from Redis Cache first
+    const cachedEvents = await redis.get(EVENTS_CACHE_KEY);
+
+    if (cachedEvents) {
+      console.log("Returning events from Cache 🚀");
+      return JSON.parse(cachedEvents);
+    }
+  }
+
+  // Build prisma where clause
+  const where: any = {
     isPublic: true,
     status: "PUBLISHED",
-  });
+  };
 
-  // 3. Save to Redis for next time
-  if (events) {
+  if (filters?.search) {
+    where.title = {
+      contains: filters.search,
+      mode: "insensitive",
+    };
+  }
+
+  if (filters?.location) {
+    where.location = {
+      contains: filters.location,
+      mode: "insensitive",
+    };
+  }
+
+  // 2. Fetch from DB
+  console.log("Fetching events from DB 🐢", filters);
+  const events = await eventDal.findEvents(where);
+
+  // 3. Save to Redis for next time ONLY if no filters (saving main list)
+  if (events && !hasFilters) {
     await redis.set(EVENTS_CACHE_KEY, JSON.stringify(events), "EX", CACHE_TTL);
   }
 

@@ -77,7 +77,11 @@ export const findEventsByCreator = async (creatorId: string) => {
       ticketTypes: true,
       _count: {
         select: {
-          tickets: true, // Count of tickets sold
+          tickets: {
+            where: {
+              status: { in: ["VALID", "USED"] },
+            },
+          }, // Count of active tickets (active bookings)
         },
       },
     },
@@ -125,5 +129,45 @@ export const findEventAttendees = async (eventId: string) => {
     orderBy: {
       purchasedAt: "desc",
     },
+  });
+};
+
+export const countActiveTickets = async (eventId: string) => {
+  return await prisma.ticket.count({
+    where: {
+      eventId,
+      status: { in: ["VALID", "USED"] },
+    },
+  });
+};
+
+export const deleteEvent = async (id: string) => {
+  return await prisma.$transaction(async (tx) => {
+    // 1. Delete all Tickets associated with this event
+    await tx.ticket.deleteMany({
+      where: { eventId: id },
+    });
+
+    // 2. Delete all TicketTypes associated with this event
+    // (Must be done after tickets are deleted because tickets reference types)
+    await tx.ticketType.deleteMany({
+      where: { eventId: id },
+    });
+
+    // 3. Delete all Reminders
+    await tx.reminder.deleteMany({
+      where: { eventId: id },
+    });
+
+    // 4. Delete all Payments associated with this event
+    // (Tickets referenced payments, so we deleted tickets first)
+    await tx.payment.deleteMany({
+      where: { eventId: id },
+    });
+
+    // 5. Finally, delete the Event itself
+    return await tx.event.delete({
+      where: { id },
+    });
   });
 };

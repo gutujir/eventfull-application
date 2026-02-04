@@ -9,6 +9,10 @@ export const createEventSchema = z.object({
   currency: z.string().default("NGN"),
   capacity: z.number().int().positive().optional(),
   isPublic: z.boolean().default(true),
+  status: z
+    .enum(["DRAFT", "PUBLISHED", "COMPLETED", "CANCELLED"])
+    .default("DRAFT")
+    .optional(),
   ticketTypes: z
     .array(
       z.object({
