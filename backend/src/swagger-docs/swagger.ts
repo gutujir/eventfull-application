@@ -1,4 +1,10 @@
 import { authSwagger } from "./auth.swagger";
+import { eventsSwagger } from "./events.swagger";
+import { ticketsSwagger } from "./tickets.swagger";
+import { paymentsSwagger } from "./payments.swagger";
+import { remindersSwagger } from "./reminders.swagger";
+import { analyticsSwagger } from "./analytics.swagger";
+import { shareSwagger } from "./share.swagger";
 
 import swaggerUi from "swagger-ui-express";
 import { Application } from "express";
@@ -13,6 +19,12 @@ const swaggerSpec = {
   },
   paths: {
     ...authSwagger,
+    ...eventsSwagger,
+    ...ticketsSwagger,
+    ...paymentsSwagger,
+    ...remindersSwagger,
+    ...analyticsSwagger,
+    ...shareSwagger,
   },
   // ...other swagger objects
   components: {

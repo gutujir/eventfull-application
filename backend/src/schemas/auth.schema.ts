@@ -7,6 +7,9 @@ export const signupSchema = z.object({
     .string()
     .min(2, "First name must be at least 2 characters long"),
   last_name: z.string().min(2, "Last name must be at least 2 characters long"),
+  role: z.enum(["CREATOR", "EVENTEE", "ADMIN"], {
+    message: "Role must be CREATOR, EVENTEE, or ADMIN",
+  }),
 });
 
 export const loginSchema = z.object({

@@ -30,3 +30,44 @@ export const updateTicketStatus = async (
     },
   });
 };
+
+export const findTicketsByUser = async (userId: string) => {
+  return await prisma.ticket.findMany({
+    where: { userId },
+    include: {
+      event: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          location: true,
+          date: true,
+          imageUrl: true,
+          slug: true,
+        },
+      },
+      ticketType: true,
+    },
+    orderBy: {
+      purchasedAt: "desc",
+    },
+  });
+};
+
+export const findTicketById = async (id: string) => {
+  return await prisma.ticket.findUnique({
+    where: { id },
+    include: {
+      event: true,
+      user: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+        },
+      },
+      ticketType: true,
+    },
+  });
+};
