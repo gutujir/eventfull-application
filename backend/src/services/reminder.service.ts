@@ -1,16 +1,36 @@
 import * as reminderDal from "../dal/reminder.dal";
+import { addReminderJob } from "../queues/reminder.queue";
 
 export const createReminder = async (
   userId: string,
   eventId: string,
   scheduledAt: Date,
+  type: "USER_CUSTOM" | "CREATOR_DEFAULT" = "USER_CUSTOM",
 ) => {
-  return await reminderDal.createReminder({
+  const created = await reminderDal.createReminder({
     scheduledAt,
-    type: "USER_CUSTOM",
+    type,
     user: { connect: { id: userId } },
     event: { connect: { id: eventId } },
   });
+
+  // Enqueue a job to send the reminder at the scheduled time
+  try {
+    await addReminderJob({
+      reminderId: created.id,
+      scheduledAt: created.scheduledAt.toISOString(),
+      userEmail: created.user.email,
+      eventTitle: created.event.title,
+    });
+  } catch (err) {
+    // Log and continue — the DB record exists and worker can recover later
+    console.warn(
+      "Failed to enqueue reminder job:",
+      (err as Error).message || err,
+    );
+  }
+
+  return created;
 };
 
 export const processReminders = async () => {
@@ -25,4 +45,8 @@ export const processReminders = async () => {
 
     await reminderDal.markReminderAsSent(reminder.id);
   }
+};
+
+export const getRemindersByUser = async (userId: string) => {
+  return await reminderDal.findRemindersByUser(userId);
 };

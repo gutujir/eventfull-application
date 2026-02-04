@@ -10,7 +10,22 @@ export const verifyToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  const token = req.cookies.token;
+  // 1. Check if user is already authenticated by global middleware
+  if (req.userId || req.user) {
+    return next();
+  }
+
+  // 2. Fallback: Check for token in cookies or header (if global middleware was skipped)
+  let token = req.cookies?.token;
+
+  // Support Bearer token in this fallback as well
+  if (!token && req.headers["authorization"]) {
+    const parts = req.headers["authorization"].split(" ");
+    if (parts.length === 2 && parts[0] === "Bearer") {
+      token = parts[1];
+    }
+  }
+
   if (!token) {
     return res
       .status(401)
@@ -31,6 +46,9 @@ export const verifyToken = (
       });
     }
     req.userId = decoded.userId;
+    // Also set req.user for consistency
+    (req as any).user = decoded;
+
     next();
   } catch (error) {
     console.log("Error in verifyToken", error);

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const initializePaymentSchema = z.object({
   amount: z.number().positive(),
-  email: z.email(),
+  eventId: z.string().uuid(),
+  email: z.email().optional(), // Optional if user is authenticated
   metadata: z.record(z.string(), z.any()).optional(),
 });

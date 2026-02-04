@@ -33,3 +33,36 @@ export const validateTicket = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
+export const getMyTickets = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      res.status(401).json({ success: false, error: "Unauthorized" });
+      return;
+    }
+
+    const tickets = await ticketService.getTicketsByUser(userId);
+    res.status(200).json({ success: true, tickets });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const getTicketById = async (req: Request, res: Response) => {
+  try {
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+
+    if (!id) {
+      res.status(400).json({ success: false, error: "Ticket ID required" });
+      return;
+    }
+
+    const ticket = await ticketService.getTicketById(id);
+    res.status(200).json({ success: true, ticket });
+  } catch (error: any) {
+    res.status(404).json({ success: false, error: error.message });
+  }
+};
