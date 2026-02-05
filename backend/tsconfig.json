@@ -31,6 +31,9 @@
     "sourceMap": true,
     "moduleResolution": "node"
   },
+  "tsc-alias": {
+    "resolveFullPaths": true
+  },
 
   // ts-node runtime settings when executing TypeScript directly (development).
   "ts-node": {
