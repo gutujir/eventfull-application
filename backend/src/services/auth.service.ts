@@ -38,3 +38,11 @@ export const loginUser = async (email: string, password: string) => {
 
   return user;
 };
+
+export const updateUserProfile = async (
+  userId: string,
+  data: Prisma.UserUpdateInput,
+) => {
+  const updatedUser = await authDal.updateUser(userId, data);
+  return updatedUser;
+};

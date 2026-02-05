@@ -8,8 +8,14 @@ export const createTicket = async (data: Prisma.TicketCreateInput) => {
 };
 
 export const findTicketByQrCode = async (qrCode: string) => {
-  return await prisma.ticket.findUnique({
-    where: { qrCode },
+  return await prisma.ticket.findFirst({
+    where: {
+      OR: [
+        { qrCode: qrCode },
+        { id: qrCode },
+        { id: { startsWith: qrCode } }, // Support short Booking Ref
+      ],
+    },
     include: {
       event: true,
       user: true,

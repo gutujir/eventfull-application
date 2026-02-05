@@ -27,7 +27,7 @@ app.use(morgan("dev")); // HTTP request logging
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true, // Allow cookies
   }),
 );
@@ -76,6 +76,9 @@ app.use(express.json());
 // parse application/x-www-form-urlencoded (HTML form submissions)
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from uploads directory
+app.use("/uploads", express.static("uploads"));
+
 // Swagger setup
 setupSwagger(app);
 
@@ -89,9 +92,16 @@ app.use(
       "/api/v1/payments/webhook",
     ],
     publicRules: [
-      { path: "/api/v1/events", method: "GET" }, // Public: List and view events
-      { path: "/api/v1/share", method: "GET" }, // Public: Shared event pages
-      { path: "/api-docs", method: "GET" }, // Public: Documentation
+      // Public: List events (exact match)
+      { path: "^/api/v1/events$", method: "GET", isRegex: true },
+      // Public: Get Event by ID (one segment after /events/, e.g., UUID)
+      { path: "^/api/v1/events/[^/]+$", method: "GET", isRegex: true },
+      // Public: Get Event by Slug (prefix)
+      { path: "/api/v1/events/slug/", method: "GET" },
+      // Public: Shared pages
+      { path: "/api/v1/share", method: "GET" },
+      // Public: Documentation
+      { path: "/api-docs", method: "GET" },
     ],
   }),
 );

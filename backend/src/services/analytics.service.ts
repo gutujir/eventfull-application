@@ -14,30 +14,11 @@ export const getCreatorStats = async (creatorId: string) => {
       totalEvents: 0,
       totalTicketsSold: 0,
       totalRevenue: 0,
-      events: [],
+      eventsBreakdown: [],
     };
   }
 
   // 2. Aggregate tickets sold and revenue across all events
-  const ticketAggregates = await prisma.ticket.aggregate({
-    where: {
-      eventId: { in: eventIds },
-      status: { not: "REFUNDED" },
-    },
-
-    _count: {
-      id: true,
-    },
-    _sum: {
-      purchasePrice: true,
-    },
-  });
-
-  // Filter for valid tickets (VALID or USED) for revenue calculation if needed,
-  // but usually we count all non-refunded.
-  // The aggregate above includes all tickets that are not REFUNDED if we add the filter.
-  // Let's refine the query.
-
   const validTicketsStats = await prisma.ticket.aggregate({
     where: {
       eventId: { in: eventIds },
@@ -47,10 +28,44 @@ export const getCreatorStats = async (creatorId: string) => {
     _sum: { purchasePrice: true },
   });
 
+  // 3. Get breakdown per event for charts
+  const eventsWithStats = await prisma.event.findMany({
+    where: { creatorId },
+    select: {
+      id: true,
+      title: true,
+      date: true,
+    },
+    take: 10,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const eventsBreakdown = await Promise.all(
+    eventsWithStats.map(async (event) => {
+      const stats = await prisma.ticket.aggregate({
+        where: {
+          eventId: event.id,
+          status: { not: "REFUNDED" },
+        },
+        _count: { id: true },
+        _sum: { purchasePrice: true },
+      });
+
+      return {
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        ticketsSold: stats._count.id || 0, // ensure number
+        revenue: Number(stats._sum.purchasePrice || 0), // ensure number
+      };
+    }),
+  );
+
   return {
     totalEvents: events.length,
     totalTicketsSold: validTicketsStats._count.id || 0,
-    totalRevenue: validTicketsStats._sum.purchasePrice || 0,
+    totalRevenue: Number(validTicketsStats._sum.purchasePrice || 0),
+    eventsBreakdown,
   };
 };
 
