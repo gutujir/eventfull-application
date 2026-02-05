@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { RateLimiterRedis, RateLimiterMemory } from "rate-limiter-flexible";
-import Redis from "ioredis";
+import redisClient from "./lib/redis";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -27,7 +27,11 @@ app.use(morgan("dev")); // HTTP request logging
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://eventfull-application.onrender.com",
+      process.env.FRONTEND_URL,
+    ].filter((origin) => origin !== undefined),
     credentials: true, // Allow cookies
   }),
 );
@@ -36,18 +40,7 @@ app.use(
 app.use(cookieParser());
 
 // Rate Limiter setup
-const redisClient = new Redis();
-
-// Add listeners so ioredis errors don't become unhandled
-redisClient.on("error", (err: Error) => {
-  console.warn("Redis error:", err.message || err);
-});
-redisClient.on("connect", () => {
-  console.info("Redis client connected");
-});
-redisClient.on("close", () => {
-  console.info("Redis connection closed");
-});
+// const redisClient = new Redis(); // Removed locals instantiation in favor of shared lib/redis client
 
 // Default to an in-memory rate limiter; we'll try to switch to Redis if available
 let rateLimiter: any = new RateLimiterMemory({ points: 100, duration: 60 });
