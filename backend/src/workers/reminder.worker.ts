@@ -9,7 +9,7 @@ const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
 const worker = new Worker(
   "reminders",
-  async (job) => {
+  async (job: any) => {
     const { reminderId, userEmail, eventTitle, scheduledAt } = job.data as {
       reminderId: string;
       userEmail: string;

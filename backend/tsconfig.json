@@ -28,7 +28,8 @@
     "forceConsistentCasingInFileNames": true,
 
     // Emit source maps alongside compiled JS for easier debugging (maps TS -> JS).
-    "sourceMap": true
+    "sourceMap": true,
+    "moduleResolution": "node"
   },
 
   // ts-node runtime settings when executing TypeScript directly (development).
