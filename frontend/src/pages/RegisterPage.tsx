@@ -9,7 +9,12 @@ import { toast } from "react-toastify";
 
 const registerSchema = z
   .object({
-    name: z.string().min(3, { message: "Name must be at least 3 characters" }),
+    firstName: z
+      .string()
+      .min(2, { message: "First name must be at least 2 characters" }),
+    lastName: z
+      .string()
+      .min(2, { message: "Last name must be at least 2 characters" }),
     email: z.email({ message: "Please enter a valid email" }),
     password: z
       .string()
@@ -113,28 +118,55 @@ const RegisterPage = () => {
 
           <div className="mt-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
-                    placeholder="John Doe"
-                    {...register("name")}
-                  />
-                  {errors.name && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.name.message}
-                    </p>
-                  )}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    First Name
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      required
+                      className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
+                      placeholder="John"
+                      {...register("firstName")}
+                    />
+                    {errors.firstName && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {errors.firstName.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Last Name
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      required
+                      className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
+                      placeholder="Doe"
+                      {...register("lastName")}
+                    />
+                    {errors.lastName && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {errors.lastName.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 

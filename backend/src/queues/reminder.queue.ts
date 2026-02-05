@@ -1,9 +1,9 @@
 import { Queue, JobScheduler } from "bullmq";
 import IORedis from "ioredis";
+import { REDIS_URL, redisOptions } from "../lib/redis";
 
-const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 // Ensure BullMQ compatible redis options
-const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+const connection = new IORedis(REDIS_URL, redisOptions);
 
 const QUEUE_NAME = "reminders";
 
