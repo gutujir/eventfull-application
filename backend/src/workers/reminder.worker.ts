@@ -2,10 +2,10 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import * as reminderDal from "../dal/reminder.dal";
 import { sendEmail } from "../services/email.service";
+import { REDIS_URL, redisOptions } from "../lib/redis";
 
-const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 // Ensure BullMQ compatible redis options
-const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+const connection = new IORedis(REDIS_URL, redisOptions);
 
 const worker = new Worker(
   "reminders",
