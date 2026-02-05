@@ -1,5 +1,7 @@
 # Eventfull Backend API
 
+**🔗 Live API Base URL:** [https://eventfull-application-backend.onrender.com](https://eventfull-application-backend.onrender.com)
+
 Eventfull is a comprehensive event ticketing platform that allows users to discover events, purchase tickets, and manage their schedules. This repository contains the backend API documentation, setup instructions, and architecture details.
 
 ## 🚀 Features
@@ -75,6 +77,7 @@ Ensure you have the following installed locally:
     # Server Configuration
     PORT=3000
     NODE_ENV=development
+    FRONTEND_URL="http://localhost:5173"  # Adjust for production
 
     # Database
     DATABASE_URL="postgresql://user:password@localhost:5432/eventfull_db?schema=public"
@@ -123,6 +126,12 @@ Once the server is running, you can access the full interactive Swagger document
 ```
 http://localhost:3000/api-docs
 ```
+
+## 🗄️ Database Schema
+
+For a visual representation of the database structure, relationships, and constraints, please refer to our ERD:
+
+- **[View Database Diagram (dbdiagram.io)](https://dbdiagram.io/d/TodoPro-App-ERD-68da5746d2b621e4225edbdc)**
 
 ## 🧪 Testing
 

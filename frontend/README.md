@@ -1,73 +1,100 @@
-# React + TypeScript + Vite
+# Eventfull Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**🚀 Deployed Application:** [https://eventfull-application.onrender.com](https://eventfull-application.onrender.com)
 
-Currently, two official plugins are available:
+Eventfull is a modern event ticketing platform client built with React, Vite, and tailwindCSS. It provides an intuitive interface for users to discover events, purchase tickets, and for creators to manage their events and view analytics.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+- **User Interface:**
+  - Modern, responsive design using **Tailwind CSS**.
+  - Interactive components and smooth transitions.
+- **Event Discovery:**
+  - Browse public events with filtering and search capabilities.
+  - Detailed event pages with ticket selection.
+- **Authentication:**
+  - Secure Login/Signup forms with validation (**React Hook Form + Zod**).
+  - Role-based dashboard access (Admin/Creator/User).
+- **Ticketing & Payments:**
+  - Seamless ticket purchasing flow.
+  - Integration with **Paystack** for secure payments.
+  - QR Code scanning for ticket verification.
+- **Dashboards:**
+  - **User Dashboard:** View purchased tickets, transaction history.
+  - **Creator Dashboard:** Real-time analytics charts (**Chart.js**) for sales and revenue.
+- **State Management:**
+  - Centralized state using **Redux Toolkit** for User Auth, Events, and more.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+- **Framework:** [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language:** TypeScript
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **State Management:** [Redux Toolkit](https://redux-toolkit.js.org/)
+- **Routing:** [React Router v7](https://reactrouter.com/)
+- **Forms & Validation:** React Hook Form + Zod
+- **Networking:** Axios
+- **Payments:** React Paystack
+- **Charts:** Chart.js + React-chartjs-2
+- **Notifications:** React Toastify
+- **Icons:** React Icons
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📋 Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Ensure you have the following installed locally:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- [Node.js](https://nodejs.org/) (v18+)
+- npm or yarn
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## ⚙️ Installation & Setup
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone <repository_url>
+    cd eventfull-application/frontend
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Configuration:**
+    Create a `.env` file in the root of the `frontend/` directory:
+
+    ```env
+    VITE_API_URL=http://localhost:3000/api/v1
+    VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxxxxx
+    ```
+
+4.  **Run Development Server:**
+
+    ```bash
+    npm run dev
+    ```
+
+    The application will be available at `http://localhost:5173`.
+
+5.  **Build for Production:**
+    ```bash
+    npm run build
+    ```
+
+## 📂 Project Structure
+
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+src/
+├── app/            # Redux store setup
+├── assets/         # Images and static assets
+├── components/     # Reusable UI components
+├── config/         # App-wide configuration (env vars, constants)
+├── features/       # Feature-based architecture (slices)
+├── hooks/          # Custom React hooks
+├── pages/          # Application routes/pages
+├── services/       # API call definitions (Axios services)
+├── store/          # Redux slices
+├── types/          # TypeScript interfaces/types
+└── utils/          # Helper functions
 ```
