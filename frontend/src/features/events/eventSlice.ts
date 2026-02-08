@@ -18,6 +18,12 @@ export interface Event {
   creator?: {
     first_name: string;
     last_name: string;
+    avatarUrl?: string;
+    jobTitle?: string;
+    company?: string;
+    phone?: string;
+    website?: string;
+    bio?: string;
   };
   ticketTypes?: {
     id: string;

@@ -12,6 +12,7 @@ Eventfull is a comprehensive event ticketing platform that allows users to disco
 - **Event Management:**
   - Create, Update (Publish/Draft/Cancel), and View Events.
   - Rich metadata support (Title, Description, Date, Price, Ticket Types).
+  - **Visibility Control:** Creators can toggle public visibility on published events.
   - **Caching Layer:** Redis caching for public event feeds for high performance.
 - **Ticketing System:**
   - Purchase Tickets with varying types (VIP, Regular, etc.).
@@ -26,6 +27,7 @@ Eventfull is a comprehensive event ticketing platform that allows users to disco
   - Automated Job Queue (BullMQ + Redis) for scheduling reminders.
   - **Email Integration:** Email notifications via Mailtrap/SMTP (Nodemailer).
   - Auto-scheduled default reminders set by Creators.
+  - Custom reminders for eventees (My Reminders list).
 - **Analytics:**
   - Creator Dashboard for Sales, Revenue, and Attendee metrics.
 - **Shareability:**
@@ -84,6 +86,9 @@ Ensure you have the following installed locally:
 
     # Authentication
     JWT_SECRET="your_very_secure_jwt_secret"
+    REFRESH_TOKEN_SECRET="your_refresh_token_secret"
+    ACCESS_TOKEN_EXPIRES_IN=1h
+    REFRESH_TOKEN_EXPIRES_IN=30d
 
     # Redis (For Caching & Queues)
     REDIS_URL="redis://127.0.0.1:6379"

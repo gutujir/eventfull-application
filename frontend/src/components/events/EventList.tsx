@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FaCalendarAlt, FaMapMarkerAlt, FaTicketAlt } from "react-icons/fa";
+import Countdown from "../common/Countdown";
 import type { Event } from "../../features/events/eventSlice";
 
 interface EventListProps {
@@ -8,6 +9,7 @@ interface EventListProps {
   isError: boolean;
   message: string;
   onRetry: () => void;
+  currentUser?: any;
 }
 
 // Helper to get full image URL
@@ -29,9 +31,33 @@ const EventList = ({
   isError,
   message,
   onRetry,
+  currentUser,
 }: EventListProps) => {
+  const missingProfileFields: string[] = [];
+  if (currentUser?.role === "EVENTEE") {
+    if (!currentUser.phone) missingProfileFields.push("Phone");
+    if (!currentUser.location) missingProfileFields.push("Location");
+    if (!currentUser.timezone) missingProfileFields.push("Timezone");
+    if (!currentUser.bio) missingProfileFields.push("Bio");
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {missingProfileFields.length > 0 && (
+        <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">Complete your profile</p>
+              <p className="text-sm text-amber-800">
+                Add missing details to speed up ticket checkout.
+              </p>
+            </div>
+            <div className="text-xs font-medium text-amber-900 bg-amber-100 px-3 py-1.5 rounded-full">
+              Missing: {missingProfileFields.join(", ")}
+            </div>
+          </div>
+        </div>
+      )}
       {isLoading ? (
         // Skeleton Loader
         Array.from({ length: 6 }).map((_, i) => (
@@ -80,15 +106,18 @@ const EventList = ({
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center text-sm text-gray-500">
                   <FaCalendarAlt className="mr-2 text-indigo-400" />
-                  <span>
-                    {new Date(event.date).toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <div>
+                    <div>
+                      {new Date(event.date).toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <Countdown targetDate={event.date} className="mt-1" />
+                  </div>
                 </div>
                 {event.creator && (
                   <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">

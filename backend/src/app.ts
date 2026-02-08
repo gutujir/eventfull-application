@@ -21,7 +21,11 @@ import { createBearerAuthMiddleware } from "./middlewares/bearerAuth";
 const app = express();
 
 // Security and logging middleware
-app.use(helmet()); // Security headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+); // Security headers
 app.use(morgan("dev")); // HTTP request logging
 
 // CORS configuration

@@ -48,6 +48,22 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // Profile fields (optional) — useful for professional user profiles
+  dateOfBirth      DateTime?       // Prefer storing DOB to compute age when needed
+  age              Int?            // Optional snapshot of age (can be derived from DOB)
+  occupation       String?         // e.g. "Product Manager"
+  jobTitle         String?         // e.g. "Senior Backend Engineer"
+  company          String?         // Company/organization name
+  phone            String?         // Contact number (validate in application layer)
+  avatarUrl        String?         // Profile picture
+  website          String?         // Personal or company website
+  location         String?         // City, Country or free-form location
+  timezone         String?         // IANA timezone id (e.g., "Africa/Lagos")
+  bio              String?         // Short professional bio or headline
+  socialProfiles   Json?           // JSON object for social links (linkedin, twitter, etc.)
+  isVerified       Boolean  @default(false)
+  profileCompleted Boolean  @default(false)
+
   // Relations
   eventsCreated    Event[]         @relation("EventCreator")
   tickets          Ticket[]        // Tickets this user has bought

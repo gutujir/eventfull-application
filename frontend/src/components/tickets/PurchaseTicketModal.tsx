@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { purchaseTicket, reset } from "../../features/tickets/ticketSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 interface PurchaseTicketModalProps {
   isOpen: boolean;
@@ -18,12 +19,14 @@ const PurchaseTicketModal = ({
 }: PurchaseTicketModalProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isLoading, isSuccess, isError, message } = useAppSelector(
+  const { isLoading, isSuccess, isError } = useAppSelector(
     (state) => state.tickets,
   );
+  const { user } = useAppSelector((state) => state.auth);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<string>("");
+  const [pendingFreePurchase, setPendingFreePurchase] = useState(false);
 
   useEffect(() => {
     if (event && event.ticketTypes && event.ticketTypes.length > 0) {
@@ -32,18 +35,26 @@ const PurchaseTicketModal = ({
   }, [event]);
 
   useEffect(() => {
-    if (isError) {
-      toast.error(message);
+    if (isOpen) {
       dispatch(reset());
+      setPendingFreePurchase(false);
+    }
+  }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (isError) {
+      dispatch(reset());
+      setPendingFreePurchase(false);
     }
 
-    if (isSuccess) {
+    if (isSuccess && pendingFreePurchase) {
       toast.success("Ticket purchased successfully!");
       dispatch(reset());
+      setPendingFreePurchase(false);
       onClose();
       navigate("/my-tickets");
     }
-  }, [isError, isSuccess, message, dispatch, onClose, navigate]);
+  }, [isError, isSuccess, pendingFreePurchase, dispatch, onClose, navigate]);
 
   if (!isOpen || !event) return null;
 
@@ -55,13 +66,39 @@ const PurchaseTicketModal = ({
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     const ticketData = {
       eventId: event.id,
       ticketTypeId: selectedTicketTypeId, // Optional if no types
       quantity,
     };
-    dispatch(purchaseTicket(ticketData));
+    if (totalPrice <= 0) {
+      setPendingFreePurchase(true);
+      dispatch(purchaseTicket(ticketData));
+      return;
+    }
+
+    try {
+      setPendingFreePurchase(false);
+      const callbackUrl = `${window.location.origin}/payments/verify`;
+      const res = await api.post("/payments/initialize", {
+        ...ticketData,
+        callbackUrl,
+        email: user?.email,
+      });
+
+      if (res.data?.authorizationUrl) {
+        window.location.href = res.data.authorizationUrl;
+      } else {
+        toast.error("Payment initialization failed.");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.error ||
+          error?.message ||
+          "Payment initialization failed.",
+      );
+    }
   };
 
   const getSelectedTicketPrice = () => {

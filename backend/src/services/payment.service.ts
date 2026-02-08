@@ -1,4 +1,7 @@
 import * as paymentDal from "../dal/payment.dal";
+import * as ticketDal from "../dal/ticket.dal";
+import * as ticketService from "./ticket.service";
+import * as eventDal from "../dal/event.dal";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { paystackConfig } from "../config/paystack.config";
@@ -6,12 +9,32 @@ import { paystackConfig } from "../config/paystack.config";
 export const initializePayment = async (
   userId: string,
   eventId: string,
-  amount: number,
+  ticketTypeId: string | undefined,
+  quantity: number,
   email: string,
+  callbackUrl?: string,
 ) => {
   if (!paystackConfig.secretKey) {
     throw new Error("Paystack secret key is not configured");
   }
+
+  const event = await eventDal.findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+
+  let unitPrice = Number(event.price);
+  let currency = event.currency || "NGN";
+
+  if (ticketTypeId) {
+    const ticketType = await eventDal.findTicketTypeById(ticketTypeId);
+    if (!ticketType) throw new Error("Ticket type not found");
+    if (ticketType.eventId !== eventId)
+      throw new Error("Ticket type does not belong to this event");
+    unitPrice = Number(ticketType.price);
+    currency = ticketType.currency || currency;
+  }
+
+  const amount = Number(unitPrice) * quantity;
+  if (amount <= 0) throw new Error("Payment amount must be greater than 0");
 
   // 1. Generate unique reference
   const reference = `REF-${uuidv4()}`;
@@ -30,7 +53,10 @@ export const initializePayment = async (
         metadata: {
           eventId,
           userId,
+          ticketTypeId: ticketTypeId || null,
+          quantity,
         },
+        ...(callbackUrl ? { callback_url: callbackUrl } : {}),
         // callback_url: "http://localhost:3000/api/v1/payments/callback" // Optional: frontend should handle this
       },
       {
@@ -57,8 +83,13 @@ export const initializePayment = async (
   // 3. Create pending payment record
   const payment = await paymentDal.createPayment({
     amount, // Store in base currency unit (e.g. Naira), not kobo
+    currency,
     reference,
     status: "PENDING",
+    metadata: {
+      ticketTypeId: ticketTypeId || null,
+      quantity,
+    },
     user: { connect: { id: userId } },
     event: { connect: { id: eventId } },
   });
@@ -106,13 +137,36 @@ export const verifyPayment = async (reference: string) => {
 
   // Only update if not already success (idempotency check basically)
   const existingPayment = await paymentDal.findPaymentByReference(reference);
-  if (existingPayment && existingPayment.status !== "SUCCESS") {
-    // NOTE: In a real app, you might also want to generate the Ticket here if payment matches ticket price
-    // and hasn't been generated yet.
-    return await paymentDal.updatePaymentStatus(reference, status);
+  if (!existingPayment) throw new Error("Payment not found");
+
+  const updateResult = await paymentDal.updatePaymentStatusIfNotSuccess(
+    reference,
+    status,
+    {
+      paidAt: isSuccess ? new Date(validationData.data.paid_at) : undefined,
+      channel: validationData.data.channel || null,
+    },
+  );
+
+  if (isSuccess && updateResult.count > 0) {
+    const meta = (existingPayment.metadata || {}) as any;
+    const quantity = Number(meta.quantity || 1);
+    const ticketTypeId = meta.ticketTypeId || undefined;
+
+    const tickets = await ticketService.createTicketsForPayment({
+      userId: existingPayment.userId,
+      eventId: existingPayment.eventId,
+      ticketTypeId,
+      quantity,
+      paymentId: existingPayment.id,
+      purchasePrice: Number(existingPayment.amount),
+      currency: existingPayment.currency,
+    });
+
+    return { payment: existingPayment, tickets };
   }
 
-  return existingPayment;
+  return { payment: existingPayment, tickets: [] };
 };
 
 export const getPaymentsForCreator = async (creatorId: string) => {

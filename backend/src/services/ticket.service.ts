@@ -101,3 +101,67 @@ export const getTicketById = async (ticketId: string) => {
     qrCodeImage,
   };
 };
+
+export const createTicketsForPayment = async (params: {
+  userId: string;
+  eventId: string;
+  ticketTypeId?: string;
+  quantity: number;
+  paymentId: string;
+  purchasePrice: number;
+  currency: string;
+}) => {
+  const {
+    userId,
+    eventId,
+    ticketTypeId,
+    quantity,
+    paymentId,
+    purchasePrice,
+    currency,
+  } = params;
+
+  const event = await eventDal.findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+
+  const tickets = [];
+  for (let i = 0; i < quantity; i += 1) {
+    const qrCodeToken = `${eventId}-${userId}-${uuidv4()}`;
+
+    const ticket = await ticketDal.createTicket({
+      qrCode: qrCodeToken,
+      purchasePrice,
+      currency,
+      user: { connect: { id: userId } },
+      event: { connect: { id: eventId } },
+      payment: { connect: { id: paymentId } },
+      ...(ticketTypeId && { ticketType: { connect: { id: ticketTypeId } } }),
+    });
+    tickets.push(ticket);
+  }
+
+  // Schedule default reminder once per purchase if creator set it
+  if (event.reminderOffsetMinutes) {
+    const eventDate = new Date(event.date);
+    const reminderTime = new Date(
+      eventDate.getTime() - event.reminderOffsetMinutes * 60000,
+    );
+    if (reminderTime > new Date()) {
+      try {
+        await reminderService.createReminder(
+          userId,
+          eventId,
+          reminderTime,
+          "CREATOR_DEFAULT",
+        );
+      } catch (err) {
+        console.warn(
+          "Failed to schedule default reminder:",
+          (err as Error).message,
+        );
+      }
+    }
+  }
+
+  return tickets;
+};

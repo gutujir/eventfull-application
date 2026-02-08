@@ -13,7 +13,17 @@ export const ticketsSwagger = {
       responses: {
         201: {
           description: "Ticket(s) created",
-          content: { "application/json": { schema: TicketResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  ticket: TicketResponse,
+                },
+              },
+            },
+          },
         },
         400: {
           description: "Validation error",
@@ -44,7 +54,21 @@ export const ticketsSwagger = {
       responses: {
         200: {
           description: "Ticket validated",
-          content: { "application/json": { schema: TicketResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: {
+                    type: "string",
+                    example: "Ticket valid and scanned",
+                  },
+                  ticket: TicketResponse,
+                },
+              },
+            },
+          },
         },
         400: {
           description: "Invalid ticket",
@@ -62,7 +86,13 @@ export const ticketsSwagger = {
           description: "List of tickets",
           content: {
             "application/json": {
-              schema: { type: "array", items: TicketResponse },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  tickets: { type: "array", items: TicketResponse },
+                },
+              },
             },
           },
         },
@@ -80,7 +110,17 @@ export const ticketsSwagger = {
       responses: {
         200: {
           description: "Ticket",
-          content: { "application/json": { schema: TicketResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  ticket: TicketResponse,
+                },
+              },
+            },
+          },
         },
         404: {
           description: "Not found",

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
@@ -6,6 +6,7 @@ import { register as registerUser, reset } from "../features/auth/authSlice";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const registerSchema = z
   .object({
@@ -21,6 +22,7 @@ const registerSchema = z
       .min(6, { message: "Password must be at least 6 characters" }),
     confirmPassword: z.string(),
     role: z.enum(["EVENTEE", "CREATOR"]),
+    // Keep signup minimal — extra profile fields handled in profile edit
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -32,6 +34,8 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const RegisterPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -60,7 +64,9 @@ const RegisterPage = () => {
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const onSubmit = (data: RegisterFormData) => {
-    const { confirmPassword, ...userData } = data;
+    const userData = { ...(data as any) };
+    // remove confirmPassword before sending
+    delete userData.confirmPassword;
     dispatch(registerUser(userData));
   };
 
@@ -202,16 +208,26 @@ const RegisterPage = () => {
                 >
                   Password
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
+                    className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
                     placeholder="••••••••"
                     {...register("password")}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
                   {errors.password && (
                     <p className="mt-2 text-sm text-red-600">
                       {errors.password.message}
@@ -227,16 +243,28 @@ const RegisterPage = () => {
                 >
                   Confirm Password
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
+                    className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
                     placeholder="••••••••"
                     {...register("confirmPassword")}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    aria-label={
+                      showConfirmPassword
+                        ? "Hide confirm password"
+                        : "Show confirm password"
+                    }
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
                   {errors.confirmPassword && (
                     <p className="mt-2 text-sm text-red-600">
                       {errors.confirmPassword.message}
@@ -284,6 +312,7 @@ const RegisterPage = () => {
                     </div>
                   </label>
                 </div>
+                {/* Creator-specific minimal fields are collected in profile after signup */}
               </div>
 
               <div>

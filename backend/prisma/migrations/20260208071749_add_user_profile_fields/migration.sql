@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "age" INTEGER,
+ADD COLUMN     "avatarUrl" TEXT,
+ADD COLUMN     "bio" TEXT,
+ADD COLUMN     "company" TEXT,
+ADD COLUMN     "dateOfBirth" TIMESTAMP(3),
+ADD COLUMN     "isVerified" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "jobTitle" TEXT,
+ADD COLUMN     "location" TEXT,
+ADD COLUMN     "occupation" TEXT,
+ADD COLUMN     "phone" TEXT,
+ADD COLUMN     "profileCompleted" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "socialProfiles" JSONB,
+ADD COLUMN     "timezone" TEXT,
+ADD COLUMN     "website" TEXT;

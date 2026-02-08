@@ -9,6 +9,7 @@ import {
   FaTrash,
   FaPlus,
   FaQrcode,
+  FaUsers,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -159,6 +160,13 @@ const MyEventsPage = () => {
                     className="flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
                   >
                     <FaEdit className="mr-2" /> Edit
+                  </button>
+                  <button
+                    onClick={() => navigate(`/my-events/${event.id}/attendees`)}
+                    className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                    title="View Attendees"
+                  >
+                    <FaUsers className="mr-2" /> Attendees
                   </button>
                   <button
                     onClick={() =>

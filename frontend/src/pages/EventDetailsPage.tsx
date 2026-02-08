@@ -9,8 +9,14 @@ import {
   FaUser,
   FaShare,
   FaArrowLeft,
+  FaBuilding,
+  FaGlobe,
+  FaPhone,
 } from "react-icons/fa";
+import Countdown from "../components/common/Countdown";
 import PurchaseTicketModal from "../components/tickets/PurchaseTicketModal";
+import api from "../services/api";
+import { toast } from "react-toastify";
 
 const EventDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +24,19 @@ const EventDetailsPage = () => {
   const { event, isLoading, isError, message } = useAppSelector(
     (state) => state.events,
   );
+  const { user } = useAppSelector((state) => state.auth);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [reminderMode, setReminderMode] = useState("1d");
+  const [customReminder, setCustomReminder] = useState("");
+
+  const getImageUrl = (path: string | null | undefined) => {
+    if (!path) return "";
+    if (path.startsWith("http") || path.startsWith("blob:")) return path;
+    const baseUrl = (
+      import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
+    ).replace("/api/v1", "");
+    return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+  };
 
   useEffect(() => {
     if (id) {
@@ -43,6 +61,41 @@ const EventDetailsPage = () => {
       navigator.clipboard.writeText(window.location.href);
       alert("Link copied to clipboard!");
     }
+  };
+
+  const handleSetReminder = async () => {
+    if (!event?.date) return;
+
+    let scheduledAt: Date | null = null;
+    const eventDate = new Date(event.date);
+
+    if (reminderMode === "custom") {
+      if (!customReminder) {
+        toast.error("Select a reminder date/time.");
+        return;
+      }
+      scheduledAt = new Date(customReminder);
+    } else {
+      const minutesMap: Record<string, number> = {
+        "1h": 60,
+        "1d": 60 * 24,
+        "1w": 60 * 24 * 7,
+      };
+      const minutes = minutesMap[reminderMode] || 60 * 24;
+      scheduledAt = new Date(eventDate.getTime() - minutes * 60000);
+    }
+
+    if (!scheduledAt || scheduledAt <= new Date()) {
+      toast.error("Reminder time must be in the future.");
+      return;
+    }
+
+    await api.post("/reminders", {
+      eventId: event.id,
+      scheduledAt: scheduledAt.toISOString(),
+    });
+
+    toast.success("Reminder scheduled successfully.");
   };
 
   if (isLoading) {
@@ -128,19 +181,22 @@ const EventDetailsPage = () => {
               <div className="flex flex-wrap gap-4 mb-8 text-sm">
                 <div className="flex items-center bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg">
                   <FaCalendarAlt className="mr-2" />
-                  <span className="font-medium">
-                    {new Date(event.date).toLocaleDateString(undefined, {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}{" "}
-                    at{" "}
-                    {new Date(event.date).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <div>
+                    <div className="font-medium">
+                      {new Date(event.date).toLocaleDateString(undefined, {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}{" "}
+                      at{" "}
+                      {new Date(event.date).toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <Countdown targetDate={event.date} className="mt-1" />
+                  </div>
                 </div>
                 <div className="flex items-center bg-pink-50 text-pink-700 px-4 py-2 rounded-lg">
                   <FaMapMarkerAlt className="mr-2" />
@@ -213,6 +269,112 @@ const EventDetailsPage = () => {
                     Register Now
                   </button>
                 </div>
+
+                {user?.role === "EVENTEE" && (
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                      Set a Reminder
+                    </h4>
+                    <div className="space-y-3">
+                      <select
+                        value={reminderMode}
+                        onChange={(e) => setReminderMode(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                      >
+                        <option value="1h">1 hour before</option>
+                        <option value="1d">1 day before</option>
+                        <option value="1w">1 week before</option>
+                        <option value="custom">Custom date/time</option>
+                      </select>
+
+                      {reminderMode === "custom" && (
+                        <input
+                          type="datetime-local"
+                          value={customReminder}
+                          onChange={(e) => setCustomReminder(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                        />
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleSetReminder}
+                        className="w-full rounded-lg bg-indigo-600 text-white py-2 text-sm font-semibold hover:bg-indigo-700"
+                      >
+                        Schedule Reminder
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {event.creator && (
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      About the Organizer
+                    </h4>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="h-14 w-14 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center overflow-hidden">
+                        {event.creator.avatarUrl ? (
+                          <img
+                            src={getImageUrl(event.creator.avatarUrl)}
+                            alt="Organizer"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="font-bold">
+                            {event.creator.first_name?.[0] || ""}
+                            {event.creator.last_name?.[0] || ""}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Organizer</p>
+                        <p className="font-semibold text-gray-900">
+                          {event.creator.first_name} {event.creator.last_name}
+                        </p>
+                        {event.creator.jobTitle && (
+                          <p className="text-xs text-gray-500">
+                            {event.creator.jobTitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {event.creator.bio && (
+                      <p className="text-sm text-gray-600 mb-4">
+                        {event.creator.bio}
+                      </p>
+                    )}
+
+                    <div className="space-y-2 text-sm text-gray-600">
+                      {event.creator.company && (
+                        <div className="flex items-center gap-2">
+                          <FaBuilding className="text-indigo-500" />
+                          <span>{event.creator.company}</span>
+                        </div>
+                      )}
+                      {event.creator.phone && (
+                        <div className="flex items-center gap-2">
+                          <FaPhone className="text-indigo-500" />
+                          <span>{event.creator.phone}</span>
+                        </div>
+                      )}
+                      {event.creator.website && (
+                        <div className="flex items-center gap-2">
+                          <FaGlobe className="text-indigo-500" />
+                          <a
+                            href={event.creator.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-600 hover:text-indigo-800"
+                          >
+                            {event.creator.website.replace(/^https?:\/\//, "")}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
