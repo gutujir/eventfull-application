@@ -33,11 +33,26 @@ const updateProfile = async (userData: any) => {
   return response.data;
 };
 
+const uploadAvatar = async (formData: FormData) => {
+  const response = await api.post("/auth/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (response.data) {
+    const existingUser = JSON.parse(localStorage.getItem("user") || "null");
+    if (existingUser) {
+      existingUser.user = response.data.user;
+      localStorage.setItem("user", JSON.stringify(existingUser));
+    }
+  }
+  return response.data;
+};
+
 const authService = {
   register,
   login,
   logout,
   updateProfile,
+  uploadAvatar,
 };
 
 export default authService;

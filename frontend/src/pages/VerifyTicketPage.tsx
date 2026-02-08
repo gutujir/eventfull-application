@@ -9,9 +9,10 @@ import {
   FaArrowLeft,
   FaCamera,
   FaKeyboard,
+  FaUpload,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 
 const VerifyTicketPage = () => {
   const [searchParams] = useSearchParams();
@@ -24,14 +25,17 @@ const VerifyTicketPage = () => {
     message: string;
   } | null>(null);
   const [isCameraMode, setIsCameraMode] = useState(false);
+  const [isUploadMode, setIsUploadMode] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(false);
 
   const dispatch = useAppDispatch();
-  const { isLoading, isError, message, isSuccess } = useAppSelector(
+  const { isLoading, isError, message, isSuccess, ticket } = useAppSelector(
     (state) => state.tickets,
   );
 
   // Ref for the QR input to keep focus for specialized scanners
   const qrInputRef = useRef<HTMLInputElement>(null);
+  const html5QrRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     return () => {
@@ -39,57 +43,110 @@ const VerifyTicketPage = () => {
     };
   }, [dispatch]);
 
-  // Cleanup scanner when switching modes or unmounting
-  useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
-    if (isCameraMode) {
-      scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false,
-      );
-      scanner.render((decodedText) => {
-        setQrCode(decodedText);
-        setIsCameraMode(false);
-        setScanResult(null);
-        // Auto-submit on scan
-        if (eventId) {
-          dispatch(validateEventTicket({ eventId, qrCode: decodedText }));
-        } else {
-          toast.info("Scanned! Now enter Event ID and Verify.");
+  const stopCamera = async () => {
+    if (html5QrRef.current) {
+      try {
+        // isScanning is available at runtime in html5-qrcode
+        if ((html5QrRef.current as any).isScanning) {
+          await html5QrRef.current.stop();
         }
-      }, undefined);
+      } catch (error) {
+        console.error("Failed to stop camera", error);
+      }
+      try {
+        await html5QrRef.current.clear();
+      } catch (error) {
+        console.error("Failed to clear camera", error);
+      }
+    }
+    setIsCameraOn(false);
+  };
+
+  const startCamera = async () => {
+    if (!html5QrRef.current) {
+      html5QrRef.current = new Html5Qrcode("reader");
     }
 
+    try {
+      await html5QrRef.current.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          setQrCode(decodedText);
+          setScanResult(null);
+          // Auto-submit on scan
+          if (eventId) {
+            dispatch(validateEventTicket({ eventId, qrCode: decodedText }));
+          } else {
+            toast.info("Scanned! Now enter Event ID and Verify.");
+          }
+          void stopCamera();
+        },
+        () => undefined,
+      );
+      setIsCameraOn(true);
+    } catch (error: any) {
+      console.error("Failed to start camera", error);
+      toast.error(error?.message || "Unable to access camera");
+      setIsCameraOn(false);
+    }
+  };
+
+  useEffect(() => {
     return () => {
-      if (scanner) {
-        scanner
-          .clear()
-          .catch((error) => console.error("Failed to clear scanner", error));
-      }
+      void stopCamera();
     };
-  }, [isCameraMode, eventId, dispatch]);
+  }, []);
+
+  const handleQrImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const html5QrCode = new Html5Qrcode("qr-file-reader");
+      const decodedText = await html5QrCode.scanFile(file, true);
+      await html5QrCode.clear();
+
+      setQrCode(decodedText);
+      setScanResult(null);
+      if (eventId) {
+        dispatch(validateEventTicket({ eventId, qrCode: decodedText }));
+      } else {
+        toast.info("QR detected. Now enter Event ID and Verify.");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to read QR image");
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   // Handle successful validation
   useEffect(() => {
     if (isSuccess && scanResult === null) {
       setScanResult({
         success: true,
-        message: "Ticket verified successfully! Access Granted.",
+        message: message || "Ticket verified successfully! Access Granted.",
       });
       setQrCode(""); // Clear for next scan
       dispatch(reset());
-      toast.success("Ticket Verified!");
+      toast.success(message || "Ticket Verified!");
     }
-  }, [isSuccess, dispatch, scanResult]);
+  }, [isSuccess, dispatch, scanResult, message]);
 
   // Handle error validation
   useEffect(() => {
     if (isError) {
-      setScanResult({ success: false, message: message || "Invalid Ticket" });
+      const rawMessage = message || "Invalid ticket";
+      const isUsed = rawMessage.toLowerCase().includes("used");
+      const friendlyMessage = isUsed
+        ? "Ticket already used. Ask attendee to provide a valid ticket or contact support."
+        : rawMessage;
+      setScanResult({ success: false, message: friendlyMessage });
       setQrCode(""); // Clear for next scan
       dispatch(reset());
-      toast.error(message || "Invalid ticket");
     }
   }, [isError, message, dispatch]);
 
@@ -124,9 +181,13 @@ const VerifyTicketPage = () => {
             <div className="flex justify-center mb-6 space-x-4">
               <button
                 type="button"
-                onClick={() => setIsCameraMode(false)}
+                onClick={() => {
+                  void stopCamera();
+                  setIsCameraMode(false);
+                  setIsUploadMode(false);
+                }}
                 className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  !isCameraMode
+                  !isCameraMode && !isUploadMode
                     ? "bg-indigo-100 text-indigo-700 border border-indigo-200"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                 }`}
@@ -135,7 +196,10 @@ const VerifyTicketPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setIsCameraMode(true)}
+                onClick={() => {
+                  setIsCameraMode(true);
+                  setIsUploadMode(false);
+                }}
                 className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isCameraMode
                     ? "bg-indigo-100 text-indigo-700 border border-indigo-200"
@@ -143,6 +207,21 @@ const VerifyTicketPage = () => {
                 }`}
               >
                 <FaCamera className="mr-2" /> Camera Scan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void stopCamera();
+                  setIsCameraMode(false);
+                  setIsUploadMode(true);
+                }}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isUploadMode
+                    ? "bg-indigo-100 text-indigo-700 border border-indigo-200"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <FaUpload className="mr-2" /> Upload QR
               </button>
             </div>
 
@@ -152,6 +231,44 @@ const VerifyTicketPage = () => {
                 <p className="text-center text-xs text-gray-500 mt-2">
                   Point camera at QR code
                 </p>
+                <div className="mt-4 flex justify-center">
+                  {isCameraOn ? (
+                    <button
+                      type="button"
+                      onClick={() => void stopCamera()}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+                    >
+                      Turn camera off
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void startCamera()}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                      Turn camera on
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : isUploadMode ? (
+              <div className="mb-6">
+                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
+                  <FaUpload className="mx-auto text-indigo-500" size={28} />
+                  <p className="mt-2 text-sm text-gray-600">
+                    Upload a QR image to extract the ticket code.
+                  </p>
+                  <label className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm cursor-pointer hover:bg-indigo-700">
+                    Choose QR Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleQrImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div id="qr-file-reader" className="hidden"></div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -235,6 +352,11 @@ const VerifyTicketPage = () => {
                     }`}
                   >
                     <p>{scanResult.message}</p>
+                    {scanResult.success && ticket?.event?.title && (
+                      <p className="mt-1 text-xs text-green-700">
+                        Event: {ticket.event.title}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

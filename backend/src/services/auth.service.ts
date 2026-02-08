@@ -3,7 +3,7 @@ import * as authDal from "../dal/auth.dal";
 import { Prisma } from "../../generated/prisma";
 
 export const registerUser = async (data: Prisma.UserCreateInput) => {
-  const { email, password, first_name, last_name } = data;
+  const { email, password } = data as any;
 
   const userAlreadyExists = await authDal.findUserByEmail(email);
 
@@ -13,12 +13,12 @@ export const registerUser = async (data: Prisma.UserCreateInput) => {
 
   const hashedPassword = await bcryptjs.hash(password, 10);
 
-  const newUser = await authDal.createUser({
-    email,
-    password: hashedPassword,
-    first_name,
-    last_name,
-  });
+  // Include any optional profile fields passed in `data` when creating the user
+  const createData: any = { ...data, password: hashedPassword };
+
+  const newUser = await authDal.createUser(
+    createData as Prisma.UserCreateInput,
+  );
 
   return newUser;
 };

@@ -15,10 +15,14 @@ This repository is organized into two main directories:
 
 - **User & Creator Dashboards:** Distinct interfaces for event attendees and organizers.
 - **Secure Payments:** Integrated with Paystack for safe ticket purchases.
+- **Payment Verification Flow:** Automatic verification and ticket issuance after payment.
 - **Real-time Notifications:** Email reminders for upcoming events.
 - **QR Code Ticketing:** Generate and scan tickets for entry.
+- **Ticket Verification Modes:** Camera scan, manual/USB input, and QR image upload.
 - **Analytics:** Insights into sales and attendance for creators.
 - **RBAC:** Role-Based Access Control (Admin, Creator, User).
+- **Event Visibility Controls:** Creators can publish and toggle public visibility.
+- **My Reminders:** Eventees can view their custom reminders.
 
 ## 🛠️ Tech Stack Overview
 
@@ -48,25 +52,47 @@ This repository is organized into two main directories:
 
 **Creator Dashboard:**
 _Analytics overview of sales and revenue._
-![Creator Dashboard](./frontend/src/assets/creator-dashboard-page.png)
+![Creator Dashboard](./frontend/src/assets/dashboard.png)
 
 **Event Management:**
 | Create Event | My Events List |
 |--------------|----------------|
-| ![Create Event](./frontend/src/assets/create-new-event-page.png) | ![My Events](./frontend/src/assets/my-events-page.png) |
+| ![Create Event](./frontend/src/assets/create-event-page.png) | ![My Events](./frontend/src/assets/my-events-page.png) |
+
+**Payments:**
+![Payments](./frontend/src/assets/payment-page.png)
+
+**Event Attendees:**
+![Event Attendees](./frontend/src/assets/event-attendees-page.png)
 
 **Ticket Verification:**
 _Scan and verify attendee tickets._
-![Verify Tickets](./frontend/src/assets/verify-tickets-page1.png)
-![Verify Tickets](./frontend/src/assets/verify-tickets-page2.png)
+![Verify Tickets - Camera](./frontend/src/assets/camera-scan-verify-ticket.png)
+![Verify Tickets - Manual](./frontend/src/assets/manual-verify-ticket.png)
+![Verify Tickets - Upload QR](./frontend/src/assets/upload-qr-verify-ticket.png)
 
 ---
 
 ### 👤 User Role: EVENTEE (Attendee)
 
+**Event Booking:**
+![Event Booking](./frontend/src/assets/event-booking-page.png)
+
+**Purchase Tickets:**
+![Purchase Tickets](./frontend/src/assets/purchase-tickets-page.png)
+
+**Payment Form:**
+![Paystack Payment Form](./frontend/src/assets/Paystack-payment-form.png)
+
 **My Tickets:**
 _View purchased tickets and order history._
 ![My Tickets](./frontend/src/assets/my-tickets-page.png)
+
+**My Reminders:**
+![My Reminders](./frontend/src/assets/My-reminders-page.png)
+
+**Profile:**
+![Profile](./frontend/src/assets/profile-page.png)
 
 ## 🏁 Getting Started
 

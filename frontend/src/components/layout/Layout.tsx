@@ -91,6 +91,14 @@ const Layout = () => {
                     My Tickets
                   </Link>
                 )}
+                {user.role === "EVENTEE" && (
+                  <Link
+                    to="/my-reminders"
+                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
+                  >
+                    My Reminders
+                  </Link>
+                )}
                 {user.role === "CREATOR" && (
                   <>
                     <Link
@@ -110,6 +118,12 @@ const Layout = () => {
                       className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
                     >
                       Create Event
+                    </Link>
+                    <Link
+                      to="/payments"
+                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
+                    >
+                      Payments
                     </Link>
                   </>
                 )}
@@ -184,6 +198,15 @@ const Layout = () => {
                     My Tickets
                   </Link>
                 )}
+                {user.role === "EVENTEE" && (
+                  <Link
+                    to="/my-reminders"
+                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    My Reminders
+                  </Link>
+                )}
                 {user.role === "CREATOR" && (
                   <>
                     <Link
@@ -206,6 +229,13 @@ const Layout = () => {
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Create Event
+                    </Link>
+                    <Link
+                      to="/payments"
+                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Payments
                     </Link>
                   </>
                 )}

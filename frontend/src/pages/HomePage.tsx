@@ -192,6 +192,7 @@ const HomePage = () => {
           isError={isError}
           message={message}
           onRetry={handleRetry}
+          currentUser={user}
         />
       </div>
 

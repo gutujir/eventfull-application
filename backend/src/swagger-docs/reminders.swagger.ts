@@ -16,7 +16,17 @@ export const remindersSwagger = {
       responses: {
         201: {
           description: "Reminder created",
-          content: { "application/json": { schema: ReminderResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  reminder: ReminderResponse,
+                },
+              },
+            },
+          },
         },
         400: {
           description: "Validation error",
@@ -32,7 +42,13 @@ export const remindersSwagger = {
           description: "List of reminders",
           content: {
             "application/json": {
-              schema: { type: "array", items: ReminderResponse },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  reminders: { type: "array", items: ReminderResponse },
+                },
+              },
             },
           },
         },

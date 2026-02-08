@@ -7,6 +7,12 @@ export const createTicket = async (data: Prisma.TicketCreateInput) => {
   });
 };
 
+export const countTicketsByPaymentId = async (paymentId: string) => {
+  return await prisma.ticket.count({
+    where: { paymentId },
+  });
+};
+
 export const findTicketByQrCode = async (qrCode: string) => {
   return await prisma.ticket.findFirst({
     where: {

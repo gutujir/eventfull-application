@@ -47,28 +47,29 @@ const AnalyticsDashboard = () => {
     value,
     icon,
     color,
+    trend,
   }: {
     title: string;
     value: string | number;
     icon: React.ReactNode;
     color: string;
+    trend?: string;
   }) => (
-    <div className="bg-white overflow-hidden shadow rounded-lg transform hover:scale-105 transition-transform duration-300">
-      <div className="p-5">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className={`rounded-md p-3 ${color}`}>{icon}</div>
+    <div className="bg-white overflow-hidden border border-gray-100 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
+      <div className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className={`rounded-xl p-3 ${color}`}>{icon}</div>
+            <div className="ml-4">
+              <p className="text-sm text-gray-500">{title}</p>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+            </div>
           </div>
-          <div className="ml-5 w-0 flex-1">
-            <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">
-                {title}
-              </dt>
-              <dd>
-                <div className="text-lg font-medium text-gray-900">{value}</div>
-              </dd>
-            </dl>
-          </div>
+          {trend && (
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+              {trend}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -127,11 +128,24 @@ const AnalyticsDashboard = () => {
   return (
     <div className="bg-gray-50 min-h-screen pt-8 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border-l-4 border-indigo-500">
-          <h1 className="text-3xl font-extrabold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Real-time overview of your events, ticket sales, and revenue.
-          </p>
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white p-6 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-indigo-100">
+                Creator Dashboard
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold">
+                Performance Overview
+              </h1>
+              <p className="mt-2 text-sm text-indigo-100">
+                Track sales, revenue, and attendance in real time.
+              </p>
+            </div>
+            <div className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm">
+              <p className="text-indigo-100">Updated</p>
+              <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -160,24 +174,27 @@ const AnalyticsDashboard = () => {
                 value={dashboardStats.totalEvents}
                 icon={<FaCalendarAlt className="h-6 w-6 text-white" />}
                 color="bg-gradient-to-r from-indigo-500 to-indigo-600"
+                trend="Active"
               />
               <StatCard
                 title="Tickets Sold"
                 value={dashboardStats.totalTicketsSold}
                 icon={<FaTicketAlt className="h-6 w-6 text-white" />}
                 color="bg-gradient-to-r from-green-500 to-green-600"
+                trend="Growing"
               />
               <StatCard
                 title="Total Revenue"
                 value={`NGN ${dashboardStats.totalRevenue.toLocaleString()}`}
                 icon={<FaMoneyBillWave className="h-6 w-6 text-white" />}
                 color="bg-gradient-to-r from-yellow-500 to-yellow-600"
+                trend="This month"
               />
             </div>
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow h-[400px] flex flex-col">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-[400px] flex flex-col">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Revenue per Event
                 </h2>
@@ -195,7 +212,7 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow h-[400px] flex flex-col">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-[400px] flex flex-col">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Ticket Sales Distribution
                 </h2>
@@ -230,15 +247,16 @@ const AnalyticsDashboard = () => {
           </div>
         )}
 
-        <div className="mt-8">
-          <div className="flex justify-end">
-            <Link
-              to="/create-event"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Create New Event
-            </Link>
+        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white rounded-xl border border-gray-100 p-4 text-sm text-gray-600">
+            Tip: Keep events updated to improve conversion and ticket sales.
           </div>
+          <Link
+            to="/events/create"
+            className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Create New Event
+          </Link>
         </div>
       </div>
     </div>

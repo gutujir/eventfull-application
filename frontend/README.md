@@ -18,12 +18,16 @@ Eventfull is a modern event ticketing platform client built with React, Vite, an
 - **Ticketing & Payments:**
   - Seamless ticket purchasing flow.
   - Integration with **Paystack** for secure payments.
+  - Automatic payment verification and ticket issuance.
   - QR Code scanning for ticket verification.
+  - Camera scan, manual/USB, and QR image upload verification modes.
 - **Dashboards:**
   - **User Dashboard:** View purchased tickets, transaction history.
   - **Creator Dashboard:** Real-time analytics charts (**Chart.js**) for sales and revenue.
+  - **Creator Payments:** View payments for hosted events.
 - **State Management:**
   - Centralized state using **Redux Toolkit** for User Auth, Events, and more.
+  - Silent token refresh to improve session stability.
 
 ## 🛠️ Tech Stack
 

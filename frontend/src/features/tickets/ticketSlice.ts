@@ -137,9 +137,12 @@ export const ticketSlice = createSlice({
       .addCase(validateEventTicket.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(validateEventTicket.fulfilled, (state) => {
+      .addCase(validateEventTicket.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
+        state.ticket = action.payload.ticket || null;
+        state.message =
+          action.payload.message || "Ticket verified successfully.";
       })
       .addCase(validateEventTicket.rejected, (state, action) => {
         state.isLoading = false;

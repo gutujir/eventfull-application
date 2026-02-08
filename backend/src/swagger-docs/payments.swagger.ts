@@ -71,7 +71,13 @@ export const paymentsSwagger = {
           description: "List of payments",
           content: {
             "application/json": {
-              schema: { type: "array", items: PaymentResponse },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  payments: { type: "array", items: { type: "object" } },
+                },
+              },
             },
           },
         },

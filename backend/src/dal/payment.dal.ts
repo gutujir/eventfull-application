@@ -7,15 +7,36 @@ export const createPayment = async (data: Prisma.PaymentCreateInput) => {
   });
 };
 
-export const updatePaymentStatus = async (reference: string, status: any) => {
+export const updatePaymentStatus = async (
+  reference: string,
+  status: any,
+  data: Partial<{ paidAt: Date; channel: string | null }> = {},
+) => {
   return await prisma.payment.update({
     where: { reference },
-    data: { status },
+    data: { status, ...data },
+  });
+};
+
+export const updatePaymentStatusIfNotSuccess = async (
+  reference: string,
+  status: any,
+  data: Partial<{ paidAt: Date; channel: string | null }> = {},
+) => {
+  return await prisma.payment.updateMany({
+    where: {
+      reference,
+      status: { not: "SUCCESS" },
+    },
+    data: { status, ...data },
   });
 };
 
 export const findPaymentByReference = async (reference: string) => {
-  return await prisma.payment.findUnique({ where: { reference } });
+  return await prisma.payment.findUnique({
+    where: { reference },
+    include: { tickets: true },
+  });
 };
 
 export const findPaymentsByCreator = async (creatorId: string) => {
@@ -24,7 +45,6 @@ export const findPaymentsByCreator = async (creatorId: string) => {
       event: {
         creatorId: creatorId,
       },
-      status: "SUCCESS", // Typically creators want to see successful payments
     },
     include: {
       event: {

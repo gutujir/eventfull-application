@@ -171,3 +171,9 @@ export const deleteEvent = async (id: string) => {
     });
   });
 };
+
+export const findTicketTypeById = async (id: string) => {
+  return await prisma.ticketType.findUnique({
+    where: { id },
+  });
+};

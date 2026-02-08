@@ -1,25 +1,29 @@
 import { Request, Response } from "express";
 import * as paymentService from "../services/payment.service";
 import { initializePaymentSchema } from "../schemas/payment.schema";
+import * as authDal from "../dal/auth.dal";
 
 export const initializePayment = async (req: Request, res: Response) => {
   try {
-    const { amount, metadata, email, eventId } = initializePaymentSchema.parse(
-      req.body,
-    );
+    const { email, eventId, ticketTypeId, quantity, callbackUrl } =
+      initializePaymentSchema.parse(req.body);
     const user = (req as any).user;
     const userId = user?.userId;
 
     // Prefer email from logged in user, fallback to body
     const payerEmail = user?.email || email;
 
+    if (!userId) throw new Error("Unauthorized");
+
     if (!payerEmail) throw new Error("Email required");
 
     const result = await paymentService.initializePayment(
       userId,
       eventId,
-      amount,
+      ticketTypeId,
+      quantity,
       payerEmail,
+      callbackUrl,
     );
     res.status(200).json({ success: true, ...result });
   } catch (error: any) {
@@ -51,8 +55,8 @@ export const verifyPayment = async (req: Request, res: Response) => {
       return;
     }
 
-    const payment = await paymentService.verifyPayment(reference);
-    res.status(200).json({ success: true, payment });
+    const result = await paymentService.verifyPayment(reference);
+    res.status(200).json({ success: true, ...result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -62,11 +66,16 @@ export const getMyPayments = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const userId = user?.userId;
-    const role = user?.role;
+    let role = user?.role;
 
     if (!userId) {
       res.status(401).json({ success: false, error: "Unauthorized" });
       return;
+    }
+
+    if (!role) {
+      const dbUser = await authDal.findUserById(userId);
+      role = dbUser?.role;
     }
 
     let payments;

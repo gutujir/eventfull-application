@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 // Create an Axios instance
 const api = axios.create({
@@ -21,14 +22,57 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+let isRefreshing = false;
+let refreshQueue: Array<(tokenRefreshed: boolean) => void> = [];
+
+const runRefreshQueue = (tokenRefreshed: boolean) => {
+  refreshQueue.forEach((cb) => cb(tokenRefreshed));
+  refreshQueue = [];
+};
+
 // Response interceptor for global error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Handle global errors like 401 Unauthorized (logout user)
-    if (error.response?.status === 401) {
-      // logic to redirect to login or clear state
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !originalRequest?.url?.includes("/auth/refresh")
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push((tokenRefreshed) => {
+            if (tokenRefreshed) {
+              resolve(api(originalRequest));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+      try {
+        await api.post("/auth/refresh");
+        runRefreshQueue(true);
+        return api(originalRequest);
+      } catch (refreshError) {
+        runRefreshQueue(false);
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
+    const apiMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      "Request failed";
+    toast.error(apiMessage);
     return Promise.reject(error);
   },
 );

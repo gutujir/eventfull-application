@@ -27,7 +27,10 @@ export const updateEventStatus = async (
     throw new Error("Unauthorized - you are not the creator of this event");
   }
 
-  const updatedEvent = await eventDal.updateEvent(eventId, { status });
+  const updatedEvent = await eventDal.updateEvent(eventId, {
+    status,
+    ...(status === EventStatus.PUBLISHED ? { isPublic: true } : {}),
+  });
 
   // Clear cache if status changes (e.g. Published <-> Draft)
   await redis.del(EVENTS_CACHE_KEY);
@@ -49,6 +52,20 @@ export const updateEventDetails = async (
 
   if (event.creatorId !== userId) {
     throw new Error("Unauthorized - you are not the creator of this event");
+  }
+
+  const statusValue =
+    typeof data.status === "object" &&
+    data.status !== null &&
+    "set" in data.status
+      ? data.status.set
+      : data.status;
+
+  const isPublicProvided =
+    typeof data.isPublic !== "undefined" && data.isPublic !== null;
+
+  if (statusValue === EventStatus.PUBLISHED && !isPublicProvided) {
+    data.isPublic = true;
   }
 
   const updatedEvent = await eventDal.updateEvent(eventId, data);
@@ -186,4 +203,8 @@ export const getEventAttendees = async (eventId: string, creatorId: string) => {
   }
 
   return await eventDal.findEventAttendees(eventId);
+};
+
+export const getTicketTypeById = async (ticketTypeId: string) => {
+  return await eventDal.findTicketTypeById(ticketTypeId);
 };

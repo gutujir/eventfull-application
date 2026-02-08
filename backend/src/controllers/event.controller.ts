@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import * as eventService from "../services/event.service";
 import { createEventSchema } from "../schemas/event.schema";
 import { EventStatus } from "../../generated/prisma";
+import { uploadBuffer } from "../lib/cloudinary";
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
@@ -48,10 +49,17 @@ export const createEvent = async (req: Request, res: Response) => {
       slug:
         validatedData.title.toLowerCase().replace(/ /g, "-") + "-" + Date.now(), // Simple slug generation
       creator: { connect: { id: userId } },
-      imageUrl: req.file
-        ? `/uploads/${req.file.filename}`
-        : "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+      imageUrl:
+        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
     };
+
+    if (req.file) {
+      const uploadResult = await uploadBuffer(req.file.buffer, {
+        folder: "eventfull/events",
+        resource_type: "image",
+      });
+      eventData.imageUrl = uploadResult.secure_url;
+    }
 
     if (validatedData.ticketTypes) {
       eventData.ticketTypes = {
@@ -232,13 +240,24 @@ export const updateEvent = async (req: Request, res: Response) => {
     ) {
       if (bodyData.price) bodyData.price = Number(bodyData.price);
       if (bodyData.capacity) bodyData.capacity = Number(bodyData.capacity);
-      // isPublic might be "true"/"false" string
-      if (typeof bodyData.isPublic === "string") {
-        bodyData.isPublic = bodyData.isPublic === "true";
-      }
+    }
+
+    // Normalize boolean fields (applies to both JSON and multipart)
+    if (typeof bodyData.isPublic === "string") {
+      bodyData.isPublic = bodyData.isPublic === "true";
     }
 
     const updateData = bodyData;
+
+    if (updateData.status !== undefined) {
+      if (!Object.values(EventStatus).includes(updateData.status)) {
+        res.status(400).json({
+          success: false,
+          error: `Invalid status. Allowed values: ${Object.values(EventStatus).join(", ")}`,
+        });
+        return;
+      }
+    }
 
     // Remove fields that shouldn't be updated directly via this endpoint if necessary
     // e.g. creatorId should not be changeable
@@ -250,7 +269,11 @@ export const updateEvent = async (req: Request, res: Response) => {
     }
 
     if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`;
+      const uploadResult = await uploadBuffer(req.file.buffer, {
+        folder: "eventfull/events",
+        resource_type: "image",
+      });
+      updateData.imageUrl = uploadResult.secure_url;
     }
 
     const event = await eventService.updateEventDetails(

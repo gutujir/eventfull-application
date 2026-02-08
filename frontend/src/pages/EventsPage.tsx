@@ -12,6 +12,7 @@ const EventsPage = () => {
   const { events, isLoading, isError, message } = useAppSelector(
     (state) => state.events,
   );
+  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -78,6 +79,7 @@ const EventsPage = () => {
           isError={isError}
           message={message}
           onRetry={handleRetry}
+          currentUser={user}
         />
       </div>
     </div>

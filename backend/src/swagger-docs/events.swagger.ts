@@ -1,4 +1,8 @@
-import { CreateEventSchema, EventResponse } from "./schema/event.schema";
+import {
+  CreateEventSchema,
+  UpdateEventSchema,
+  EventResponse,
+} from "./schema/event.schema";
 import { ErrorResponse } from "./responses/auth.response";
 
 export const eventsSwagger = {
@@ -6,12 +10,34 @@ export const eventsSwagger = {
     get: {
       tags: ["Events"],
       summary: "Get public events",
+      parameters: [
+        {
+          name: "search",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Search by title/description",
+        },
+        {
+          name: "location",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Filter by location",
+        },
+      ],
       responses: {
         200: {
           description: "List of events",
           content: {
             "application/json": {
-              schema: { type: "array", items: EventResponse },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  events: { type: "array", items: EventResponse },
+                },
+              },
             },
           },
         },
@@ -22,12 +48,37 @@ export const eventsSwagger = {
       summary: "Create an event (authenticated)",
       requestBody: {
         required: true,
-        content: { "application/json": { schema: CreateEventSchema } },
+        content: {
+          "application/json": { schema: CreateEventSchema },
+          "multipart/form-data": {
+            schema: {
+              allOf: [
+                CreateEventSchema,
+                {
+                  type: "object",
+                  properties: {
+                    image: { type: "string", format: "binary" },
+                  },
+                },
+              ],
+            },
+          },
+        },
       },
       responses: {
         201: {
           description: "Event created",
-          content: { "application/json": { schema: EventResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
         },
         400: {
           description: "Validation error",
@@ -47,7 +98,90 @@ export const eventsSwagger = {
       responses: {
         200: {
           description: "Event",
-          content: { "application/json": { schema: EventResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
+        },
+        404: {
+          description: "Not found",
+          content: { "application/json": { schema: ErrorResponse } },
+        },
+      },
+    },
+    put: {
+      tags: ["Events"],
+      summary: "Update an event (creator only)",
+      parameters: [
+        { name: "id", in: "path", required: true, schema: { type: "string" } },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": { schema: UpdateEventSchema },
+          "multipart/form-data": {
+            schema: {
+              allOf: [
+                UpdateEventSchema,
+                {
+                  type: "object",
+                  properties: {
+                    image: { type: "string", format: "binary" },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Event updated",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
+        },
+        400: {
+          description: "Validation error",
+          content: { "application/json": { schema: ErrorResponse } },
+        },
+      },
+    },
+    delete: {
+      tags: ["Events"],
+      summary: "Delete an event (creator only)",
+      parameters: [
+        { name: "id", in: "path", required: true, schema: { type: "string" } },
+      ],
+      responses: {
+        200: {
+          description: "Event deleted",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
         },
         404: {
           description: "Not found",
@@ -71,7 +205,17 @@ export const eventsSwagger = {
       responses: {
         200: {
           description: "Event",
-          content: { "application/json": { schema: EventResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
         },
         404: {
           description: "Not found",
@@ -90,7 +234,13 @@ export const eventsSwagger = {
           description: "List of events",
           content: {
             "application/json": {
-              schema: { type: "array", items: EventResponse },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  events: { type: "array", items: EventResponse },
+                },
+              },
             },
           },
         },
@@ -110,7 +260,13 @@ export const eventsSwagger = {
           description: "List of attendees",
           content: {
             "application/json": {
-              schema: { type: "array", items: { type: "object" } },
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  attendees: { type: "array", items: { type: "object" } },
+                },
+              },
             },
           },
         },
@@ -148,7 +304,17 @@ export const eventsSwagger = {
       responses: {
         200: {
           description: "Event status updated",
-          content: { "application/json": { schema: EventResponse } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  event: EventResponse,
+                },
+              },
+            },
+          },
         },
         400: {
           description: "Validation error",

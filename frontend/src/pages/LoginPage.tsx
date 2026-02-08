@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
@@ -6,6 +6,7 @@ import { login, reset } from "../features/auth/authSlice";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const loginSchema = z.object({
   email: z.email({ message: "Please enter a valid email" }),
@@ -19,6 +20,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -134,16 +136,26 @@ const LoginPage = () => {
                 >
                   Password
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
+                    className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 text-base"
                     placeholder="••••••••"
                     {...register("password")}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
                   {errors.password && (
                     <p className="mt-2 text-sm text-red-600">
                       {errors.password.message}
