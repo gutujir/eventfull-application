@@ -10,6 +10,11 @@ export function generateTokenAndSetCookie(userId: string, res: Response) {
   const accessExpiry = process.env.ACCESS_TOKEN_EXPIRES_IN || "1h";
   const refreshExpiry = process.env.REFRESH_TOKEN_EXPIRES_IN || "30d";
 
+  const isProd = process.env.NODE_ENV === "production";
+  const sameSite = (process.env.COOKIE_SAMESITE ||
+    (isProd ? "none" : "lax")) as "lax" | "strict" | "none";
+  const domain = process.env.COOKIE_DOMAIN || undefined;
+
   const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET as string, {
     expiresIn: accessExpiry as any,
   });
@@ -25,8 +30,9 @@ export function generateTokenAndSetCookie(userId: string, res: Response) {
   const accessMaxAge = parseCookieMaxAge(accessExpiry);
   res.cookie("token", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    secure: isProd,
+    sameSite,
+    domain,
     maxAge: accessMaxAge,
   });
 
@@ -34,8 +40,9 @@ export function generateTokenAndSetCookie(userId: string, res: Response) {
   const refreshMaxAge = parseCookieMaxAge(refreshExpiry);
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    secure: isProd,
+    sameSite,
+    domain,
     maxAge: refreshMaxAge,
   });
 
