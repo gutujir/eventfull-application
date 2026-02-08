@@ -13,10 +13,18 @@ const api = axios.create({
 // Request interceptor to add Authorization header if you switch to storage based tokens
 api.interceptors.request.use(
   (config) => {
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const token = parsed?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch {
+        // ignore malformed storage
+      }
+    }
     return config;
   },
   (error) => Promise.reject(error),
