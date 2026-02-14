@@ -4,6 +4,7 @@ import * as reminderService from "./reminder.service";
 import { v4 as uuidv4 } from "uuid";
 import { generateQRCodeImage } from "./qrcode.service";
 import { prisma } from "../lib/prisma";
+import redis from "../lib/redis";
 
 export const purchaseTicket = async (
   userId: string,
@@ -13,6 +14,13 @@ export const purchaseTicket = async (
   // 1. Check event exists
   const event = await eventDal.findEventById(eventId);
   if (!event) throw new Error("Event not found");
+
+  const eventEnd = event.endDateTime
+    ? new Date(event.endDateTime)
+    : new Date(event.date);
+  if (eventEnd <= new Date()) {
+    throw new Error("This event has ended. Ticket booking is closed.");
+  }
 
   // 2. Determine the price based on ticketType or event price
   let purchasePrice = event.price;
@@ -67,31 +75,78 @@ export const purchaseTicket = async (
   }
 
   // 7. Return ticket with QR code image
+  await redis.del(`analytics:event:${eventId}`);
+  await redis.del(`analytics:creator:${event.creatorId}`);
+
   return {
     ...ticket,
     qrCodeImage, // Include the base64 image data URL
   };
 };
 
-export const validateTicket = async (qrCode: string, eventId: string) => {
+const validateTicketInternal = async (
+  qrCode: string,
+  eventId: string,
+  creatorId?: string,
+) => {
   const ticket = await ticketDal.findTicketByQrCode(qrCode);
 
   if (!ticket) throw new Error("Invalid ticket");
   if (ticket.eventId !== eventId)
     throw new Error("Ticket does not belong to this event");
+  if (creatorId && ticket.event.creatorId !== creatorId) {
+    throw new Error("Unauthorized - you are not the creator of this event");
+  }
   if (ticket.status !== "VALID") throw new Error(`Ticket is ${ticket.status}`);
 
   // Mark as used
-  return await ticketDal.updateTicketStatus(ticket.id, "USED", new Date());
+  const updatedTicket = await ticketDal.updateTicketStatus(
+    ticket.id,
+    "USED",
+    new Date(),
+  );
+
+  await redis.del(`analytics:event:${eventId}`);
+  await redis.del(`analytics:creator:${ticket.event.creatorId}`);
+
+  return updatedTicket;
+};
+
+export const validateTicket = async (
+  qrCode: string,
+  eventId: string,
+  creatorId?: string,
+) => {
+  return validateTicketInternal(qrCode, eventId, creatorId);
 };
 
 export const getTicketsByUser = async (userId: string) => {
-  return await ticketDal.findTicketsByUser(userId);
+  const tickets = await ticketDal.findTicketsByUser(userId);
+  return Promise.all(
+    tickets.map(async (ticket) => ({
+      ...ticket,
+      qrCodeImage: await generateQRCodeImage(ticket.qrCode),
+    })),
+  );
 };
 
-export const getTicketById = async (ticketId: string) => {
+export const getTicketById = async (
+  ticketId: string,
+  requester?: { userId?: string; role?: string },
+) => {
   const ticket = await ticketDal.findTicketById(ticketId);
   if (!ticket) throw new Error("Ticket not found");
+
+  if (requester?.role !== "ADMIN") {
+    const isOwner = requester?.userId === ticket.userId;
+    const isCreatorForEvent =
+      (requester?.role === "CREATOR" || requester?.role === "ADMIN") &&
+      requester?.userId === ticket.event.creatorId;
+
+    if (!isOwner && !isCreatorForEvent) {
+      throw new Error("Unauthorized - cannot view this ticket");
+    }
+  }
 
   // Generate QR code image for this ticket
   const qrCodeImage = await generateQRCodeImage(ticket.qrCode);
@@ -123,6 +178,13 @@ export const createTicketsForPayment = async (params: {
 
   const event = await eventDal.findEventById(eventId);
   if (!event) throw new Error("Event not found");
+
+  const eventEnd = event.endDateTime
+    ? new Date(event.endDateTime)
+    : new Date(event.date);
+  if (eventEnd <= new Date()) {
+    throw new Error("This event has ended. Ticket booking is closed.");
+  }
 
   const tickets = [];
   for (let i = 0; i < quantity; i += 1) {
@@ -162,6 +224,9 @@ export const createTicketsForPayment = async (params: {
       }
     }
   }
+
+  await redis.del(`analytics:event:${eventId}`);
+  await redis.del(`analytics:creator:${event.creatorId}`);
 
   return tickets;
 };

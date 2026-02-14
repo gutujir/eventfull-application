@@ -17,6 +17,14 @@ const worker = new Worker(
       scheduledAt: string;
     };
 
+    const reminder = await reminderDal.findReminderById(reminderId);
+    if (!reminder) {
+      return { ok: true, skipped: true, reason: "reminder-not-found" };
+    }
+    if (reminder.isSent) {
+      return { ok: true, skipped: true, reason: "already-sent" };
+    }
+
     console.log(
       `Processing reminder for ${userEmail} regarding event: ${eventTitle}`,
     );

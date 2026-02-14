@@ -3,6 +3,10 @@ import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { getEvents, reset } from "../features/events/eventSlice";
 import EventList from "../components/events/EventList";
 import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import SectionHeader from "../components/ui/SectionHeader";
 
 const EventsPage = () => {
   const dispatch = useAppDispatch();
@@ -33,44 +37,49 @@ const EventsPage = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
-            Explore All Events
-          </h1>
-          <p className="mt-4 text-xl text-gray-500 max-w-2xl mx-auto">
-            Find the perfect event for you.
-          </p>
+    <div className="min-h-screen pt-3 sm:pt-6">
+      <div className="mx-auto max-w-7xl px-1 sm:px-2">
+        <div className="mb-10">
+          <SectionHeader
+            align="center"
+            eyebrow="Discover"
+            title="Explore All Events"
+            subtitle="Find the perfect event for your interests and location."
+          />
         </div>
 
-        {/* Search Bar - Simplified for Listing Page */}
         <div className="max-w-4xl mx-auto mb-12">
-          <div className="bg-white rounded-xl shadow-lg p-3 flex flex-col md:flex-row gap-2 border border-gray-200">
-            <div className="flex-grow flex items-center bg-gray-50 rounded-lg px-4 py-3">
-              <FaSearch className="text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Search events..."
-                className="bg-transparent border-none outline-none w-full text-gray-700 placeholder-gray-400"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <Card className="p-3 sm:p-4">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex-grow flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3">
+                <FaSearch className="text-gray-400 mr-3" />
+                <Input
+                  type="text"
+                  placeholder="Search events..."
+                  className="border-0 bg-transparent px-0"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex-grow md:max-w-[250px] flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3">
+                <FaMapMarkerAlt className="text-gray-400 mr-3" />
+                <Input
+                  type="text"
+                  placeholder="Location"
+                  className="border-0 bg-transparent px-0"
+                  value={locationTerm}
+                  onChange={(e) => setLocationTerm(e.target.value)}
+                />
+              </div>
+              <Button
+                className="md:min-w-[120px]"
+                onClick={handleRetry}
+                type="button"
+              >
+                Search
+              </Button>
             </div>
-            <div className="flex-grow md:max-w-[250px] flex items-center bg-gray-50 rounded-lg px-4 py-3">
-              <FaMapMarkerAlt className="text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Location"
-                className="bg-transparent border-none outline-none w-full text-gray-700 placeholder-gray-400"
-                value={locationTerm}
-                onChange={(e) => setLocationTerm(e.target.value)}
-              />
-            </div>
-            <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition-colors">
-              Search
-            </button>
-          </div>
+          </Card>
         </div>
 
         <EventList

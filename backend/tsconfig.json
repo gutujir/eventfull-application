@@ -28,8 +28,7 @@
     "forceConsistentCasingInFileNames": true,
 
     // Emit source maps alongside compiled JS for easier debugging (maps TS -> JS).
-    "sourceMap": true,
-    "moduleResolution": "node"
+    "sourceMap": true
   },
   "tsc-alias": {
     "resolveFullPaths": true

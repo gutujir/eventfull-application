@@ -28,12 +28,18 @@ export const paymentsSwagger = {
   "/api/v1/payments/webhook": {
     post: {
       tags: ["Payments"],
-      summary: "Payment provider webhook endpoint",
+      summary: "Payment provider webhook endpoint (requires valid signature)",
       requestBody: {
         required: true,
         content: { "application/json": { schema: { type: "object" } } },
       },
-      responses: { 200: { description: "Webhook received" } },
+      responses: {
+        200: { description: "Webhook received" },
+        401: {
+          description: "Invalid webhook signature",
+          content: { "application/json": { schema: ErrorResponse } },
+        },
+      },
     },
   },
   "/api/v1/payments/verify": {

@@ -6,7 +6,15 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, isAuthChecking } = useAppSelector((state) => state.auth);
+
+  if (isAuthChecking) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-300 border-t-(--color-brand)" />
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;

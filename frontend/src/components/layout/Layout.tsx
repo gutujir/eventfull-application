@@ -18,10 +18,41 @@ const Layout = () => {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const mobileButtonRef = useRef<HTMLButtonElement | null>(null);
 
+  const getProfileImageUrl = (value: string) => {
+    if (value.startsWith("http") || value.startsWith("blob:")) return value;
+    const baseUrl = (
+      import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
+    ).replace("/api/v1", "");
+    return `${baseUrl}${value.startsWith("/") ? "" : "/"}${value}`;
+  };
+
+  const profileImage =
+    user?.avatarUrl ||
+    user?.avatar_url ||
+    user?.profilePicture ||
+    user?.profile_picture ||
+    user?.photoUrl ||
+    user?.photo_url ||
+    null;
+  const profileInitials = `${user?.first_name?.[0] || user?.firstName?.[0] || ""}${user?.last_name?.[0] || ""}`;
+
   const handleLogout = () => {
     dispatch(logout());
     setIsMobileMenuOpen(false);
   };
+
+  const eventeeNav = [
+    { to: "/events", label: "Explore Events" },
+    { to: "/my-tickets", label: "My Tickets" },
+    { to: "/my-reminders", label: "My Reminders" },
+  ];
+
+  const creatorNav = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/my-events", label: "My Events" },
+    { to: "/events/create", label: "Create Event" },
+    { to: "/payments", label: "Payments" },
+  ];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -45,361 +76,234 @@ const Layout = () => {
     };
   }, [isMobileMenuOpen]);
 
+  const desktopNav =
+    !user || user.role === "EVENTEE"
+      ? user
+        ? eventeeNav
+        : [{ to: "/events", label: "Explore Events" }]
+      : creatorNav;
+
+  const mobileNav =
+    !user || user.role === "EVENTEE"
+      ? user
+        ? eventeeNav
+        : [{ to: "/events", label: "Explore Events" }]
+      : creatorNav;
+
   return (
-    <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-gray-50">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg shadow-sm">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="bg-indigo-600 text-white p-2 rounded-lg transform group-hover:rotate-12 transition-transform duration-300">
-                <FaCalendarAlt size={20} />
-              </div>
-              <span className="text-2xl font-extrabold tracking-tight text-gray-900 group-hover:text-indigo-600 transition-colors">
-                EventFull
-              </span>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-(--color-bg) text-(--color-text)">
+      <header className="sticky top-0 z-50 border-b border-(--color-border) bg-white/95 backdrop-blur">
+        <div className="container-shell flex h-18 items-center justify-between gap-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold tracking-tight"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--color-brand) text-white shadow-sm">
+              <FaCalendarAlt size={16} />
+            </span>
+            <span className="text-lg sm:text-xl">Eventfull</span>
+          </Link>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button
-              ref={mobileButtonRef}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 hover:text-indigo-600 focus:outline-none p-2"
-            >
-              {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-            </button>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-8">
-            {(!user || user.role === "EVENTEE") && (
+          <nav className="hidden items-center gap-6 md:flex">
+            {desktopNav.map((item) => (
               <Link
-                to="/events"
-                className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
+                key={item.to}
+                to={item.to}
+                className="app-link text-sm font-medium"
               >
-                Explore Events
+                {item.label}
               </Link>
-            )}
+            ))}
+          </nav>
 
-            {user && (
-              <>
-                {user.role === "EVENTEE" && (
-                  <Link
-                    to="/my-tickets"
-                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                  >
-                    My Tickets
-                  </Link>
-                )}
-                {user.role === "EVENTEE" && (
-                  <Link
-                    to="/my-reminders"
-                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                  >
-                    My Reminders
-                  </Link>
-                )}
-                {user.role === "CREATOR" && (
-                  <>
-                    <Link
-                      to="/dashboard"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <Link
-                      to="/my-events"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                    >
-                      My Events
-                    </Link>
-                    <Link
-                      to="/events/create"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                    >
-                      Create Event
-                    </Link>
-                    <Link
-                      to="/payments"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                    >
-                      Payments
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
-
+          <div className="hidden items-center gap-3 md:flex">
             {user ? (
-              <div className="flex items-center space-x-4">
+              <>
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-2 text-gray-700 bg-gray-100/80 px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-200 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl border border-(--color-border) bg-white px-3 py-2 text-sm font-medium text-(--color-text-muted)"
                 >
-                  <FaUserCircle className="text-indigo-600" size={18} />
-                  <span className="font-semibold text-sm">
+                  {profileImage ? (
+                    <img
+                      src={getProfileImageUrl(profileImage)}
+                      alt="Profile"
+                      className="h-6 w-6 rounded-full object-cover border border-slate-200"
+                    />
+                  ) : profileInitials ? (
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+                      {profileInitials}
+                    </span>
+                  ) : (
+                    <FaUserCircle className="text-(--color-brand)" size={16} />
+                  )}
+                  <span>
                     {user.first_name || user.firstName || user.name || "User"}
                   </span>
                 </Link>
-
-                {/* Desktop: show labeled logout button; Mobile keeps dropdown version */}
                 <button
                   onClick={handleLogout}
-                  className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors px-3 py-2 rounded-md bg-red-50 hover:bg-red-100"
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
                   title="Logout"
                 >
-                  <FaSignOutAlt size={16} className="text-red-600" />
-                  <span className="font-medium text-sm">Logout</span>
+                  <FaSignOutAlt size={14} />
+                  Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-4">
-                <Link
-                  to="/login"
-                  className="text-gray-600 font-medium hover:text-indigo-600 transition-colors"
-                >
+              <>
+                <Link to="/login" className="app-link text-sm font-medium">
                   Log in
                 </Link>
-                <Link
-                  to="/register"
-                  className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-                >
+                <Link to="/register" className="app-button-primary text-sm">
                   Sign up
                 </Link>
-              </div>
+              </>
             )}
           </div>
-        </nav>
 
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div
-            ref={menuRef}
-            className="md:hidden absolute top-20 right-0 w-64 bg-white border border-gray-200 shadow-xl rounded-lg py-4 px-4 flex flex-col space-y-4 m-2 animate-in fade-in slide-in-from-top-5 duration-200"
+          <button
+            ref={mobileButtonRef}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-(--color-border) bg-white text-(--color-text-muted) md:hidden"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {(!user || user.role === "EVENTEE") && (
-              <Link
-                to="/events"
-                className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Explore Events
-              </Link>
-            )}
+            {isMobileMenuOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
+          </button>
+        </div>
 
-            {user && (
-              <>
-                {user.role === "EVENTEE" && (
-                  <Link
-                    to="/my-tickets"
-                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    My Tickets
-                  </Link>
-                )}
-                {user.role === "EVENTEE" && (
-                  <Link
-                    to="/my-reminders"
-                    className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    My Reminders
-                  </Link>
-                )}
-                {user.role === "CREATOR" && (
+        {isMobileMenuOpen && (
+          <div className="border-t border-(--color-border) bg-white md:hidden">
+            <div
+              ref={menuRef}
+              className="container-shell flex flex-col gap-1 py-4"
+            >
+              {mobileNav.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-(--color-text-muted) hover:bg-slate-50 hover:text-(--color-brand)"
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              <div className="mt-2 border-t border-(--color-border) pt-3">
+                {user ? (
                   <>
                     <Link
-                      to="/dashboard"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
+                      to="/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
+                      className="mb-2 inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-(--color-text-muted) hover:bg-slate-50"
                     >
-                      Dashboard
+                      {profileImage ? (
+                        <img
+                          src={getProfileImageUrl(profileImage)}
+                          alt="Profile"
+                          className="h-6 w-6 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : profileInitials ? (
+                        <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+                          {profileInitials}
+                        </span>
+                      ) : (
+                        <FaUserCircle
+                          className="text-(--color-brand)"
+                          size={16}
+                        />
+                      )}
+                      <span>
+                        {user.first_name ||
+                          user.firstName ||
+                          user.name ||
+                          "User"}
+                      </span>
                     </Link>
-                    <Link
-                      to="/my-events"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                    <button
+                      onClick={handleLogout}
+                      className="inline-flex w-full items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
                     >
-                      My Events
-                    </Link>
-                    <Link
-                      to="/events/create"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Create Event
-                    </Link>
-                    <Link
-                      to="/payments"
-                      className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Payments
-                    </Link>
+                      <FaSignOutAlt size={14} />
+                      Logout
+                    </button>
                   </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="app-button-secondary text-center text-sm"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="app-button-primary text-center text-sm"
+                    >
+                      Sign up
+                    </Link>
+                  </div>
                 )}
-              </>
-            )}
-
-            {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-2 text-gray-700 py-2 border-t border-gray-100 mt-2 pt-4"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <FaUserCircle className="text-indigo-600" size={18} />
-                  <span className="font-semibold text-sm">
-                    {user.first_name || user.firstName || user.name || "User"}
-                  </span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-red-500 py-2"
-                >
-                  <FaSignOutAlt size={18} />
-                  <span>Logout</span>
-                </button>
-              </>
-            ) : (
-              <div className="flex flex-col space-y-3 pt-2 border-t border-gray-100 mt-2">
-                <Link
-                  to="/login"
-                  className="text-gray-600 font-medium hover:text-indigo-600 transition-colors py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold text-center text-sm shadow-md hover:bg-indigo-700"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign up
-                </Link>
               </div>
-            )}
+            </div>
           </div>
         )}
       </header>
 
-      <main className="flex-grow w-full pt-20">
+      <main className="container-shell min-h-[calc(100vh-17rem)] py-8">
         <Outlet />
       </main>
 
-      <footer className="bg-white border-t border-gray-200 pb-12 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center space-x-2 mb-6">
-                <div className="bg-indigo-600 text-white p-1.5 rounded-md">
-                  <FaCalendarAlt size={16} />
-                </div>
-                <span className="text-lg font-bold text-gray-900">
-                  EventFull
+      <footer className="border-t border-(--color-border) bg-white">
+        <div className="container-shell py-10">
+          <div className="grid gap-8 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <div className="mb-3 flex items-center gap-2 font-semibold">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-(--color-brand) text-white">
+                  <FaCalendarAlt size={14} />
                 </span>
+                Eventfull
               </div>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                The modern platform for discovering and organizing events that
-                matter. Join our community today.
+              <p className="max-w-lg text-sm leading-6 text-(--color-text-muted)">
+                Professional event discovery and management for attendees and
+                creators. Build better experiences and track outcomes in one
+                platform.
               </p>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 mb-6">Platform</h4>
-              <ul className="space-y-4">
+              <h4 className="mb-3 text-sm font-semibold">Platform</h4>
+              <ul className="space-y-2 text-sm">
                 <li>
-                  <Link
-                    to="/events"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
+                  <Link to="/events" className="app-link">
                     Browse Events
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to="/about"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    About Us
+                  <Link to="/about" className="app-link">
+                    About
                   </Link>
                 </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Features
-                  </a>
-                </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 mb-6">Resources</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Guidelines
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-900 mb-6">Legal</h4>
-              <ul className="space-y-4">
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-500 hover:text-indigo-600 text-sm font-medium"
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
+              <h4 className="mb-3 text-sm font-semibold">Company</h4>
+              <ul className="space-y-2 text-sm text-(--color-text-muted)">
+                <li>Support</li>
+                <li>Privacy</li>
+                <li>Terms</li>
               </ul>
             </div>
           </div>
-          <div className="mt-16 border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-center md:justify-between items-center text-sm text-gray-400">
-            <p>&copy; {new Date().getFullYear()} EventFull Inc.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <span className="hover:text-indigo-500 cursor-pointer">
-                Twitter
-              </span>
-              <span className="hover:text-indigo-500 cursor-pointer">
-                Instagram
-              </span>
-              <span className="hover:text-indigo-500 cursor-pointer">
-                LinkedIn
-              </span>
+
+          <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-(--color-border) pt-5 text-sm text-(--color-text-muted) sm:flex-row sm:items-center">
+            <p>© {new Date().getFullYear()} EventFull</p>
+            <div className="flex items-center gap-4">
+              <span>Twitter</span>
+              <span>Instagram</span>
+              <span>LinkedIn</span>
             </div>
           </div>
         </div>

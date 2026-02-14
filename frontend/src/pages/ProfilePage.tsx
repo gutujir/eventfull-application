@@ -176,7 +176,7 @@ const ProfilePage = () => {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 text-white p-6 sm:p-8 shadow-xl">
+      <div className="rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 text-white p-6 sm:p-8 shadow-xl motion-lift">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden bg-white/10 ring-2 ring-white/30 flex items-center justify-center">
@@ -195,6 +195,8 @@ const ProfilePage = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
+                  aria-label="Upload profile avatar"
+                  title="Upload profile avatar"
                   className="hidden"
                 />
               </label>
@@ -232,7 +234,7 @@ const ProfilePage = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 motion-lift">
             <h3 className="text-base font-semibold text-slate-900">
               Avatar & Contact
             </h3>
@@ -252,12 +254,14 @@ const ProfilePage = () => {
                 )}
               </div>
               <div>
-                <label className="inline-flex items-center px-3 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg shadow-sm cursor-pointer hover:bg-slate-800">
+                <label className="motion-press inline-flex items-center px-3 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg shadow-sm cursor-pointer hover:bg-slate-800">
                   <FaCamera className="mr-2" /> Update avatar
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
+                    aria-label="Update avatar"
+                    title="Update avatar"
                     className="hidden"
                   />
                 </label>
@@ -281,7 +285,7 @@ const ProfilePage = () => {
 
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4 motion-lift">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">
@@ -305,7 +309,7 @@ const ProfilePage = () => {
                     <input
                       id="firstName"
                       {...register("firstName")}
-                      className={`pl-10 block w-full rounded-lg border ${errors.firstName ? "border-red-300" : "border-slate-200"} bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200`}
+                      className={`pl-10 block w-full rounded-lg border ${errors.firstName ? "border-red-300" : "border-slate-200"} bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition`}
                       placeholder="Jane"
                     />
                   </div>
@@ -323,7 +327,7 @@ const ProfilePage = () => {
                   <input
                     id="lastName"
                     {...register("lastName")}
-                    className={`mt-1 block w-full rounded-lg border ${errors.lastName ? "border-red-300" : "border-slate-200"} bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200`}
+                    className={`mt-1 block w-full rounded-lg border ${errors.lastName ? "border-red-300" : "border-slate-200"} bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition`}
                     placeholder="Doe"
                   />
                   {errors.lastName && (
@@ -360,13 +364,13 @@ const ProfilePage = () => {
                     type="date"
                     id="dateOfBirth"
                     {...register("dateOfBirth")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4 motion-lift">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
                   Professional profile
@@ -383,7 +387,7 @@ const ProfilePage = () => {
                   <input
                     id="occupation"
                     {...register("occupation")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="Product Manager"
                   />
                 </div>
@@ -394,7 +398,7 @@ const ProfilePage = () => {
                   <input
                     id="jobTitle"
                     {...register("jobTitle")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="Head of Events"
                   />
                 </div>
@@ -405,7 +409,7 @@ const ProfilePage = () => {
                   <input
                     id="company"
                     {...register("company")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="Company name"
                   />
                 </div>
@@ -417,14 +421,14 @@ const ProfilePage = () => {
                     id="website"
                     type="url"
                     {...register("website")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="https://your-site.com"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4 motion-lift">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
                   Contact & socials
@@ -441,7 +445,7 @@ const ProfilePage = () => {
                   <input
                     id="phone"
                     {...register("phone")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="+1 555 0100"
                   />
                 </div>
@@ -452,7 +456,7 @@ const ProfilePage = () => {
                   <input
                     id="location"
                     {...register("location")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="City, Country"
                   />
                 </div>
@@ -463,7 +467,7 @@ const ProfilePage = () => {
                   <select
                     id="timezone"
                     {...register("timezone")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                   >
                     <option value="">Select timezone</option>
                     <option value="UTC">UTC</option>
@@ -517,7 +521,7 @@ const ProfilePage = () => {
                   <input
                     id="linkedin"
                     {...register("linkedin")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="linkedin.com/in/you"
                   />
                 </div>
@@ -528,14 +532,14 @@ const ProfilePage = () => {
                   <input
                     id="twitter"
                     {...register("twitter")}
-                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                     placeholder="@yourhandle"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 space-y-4 motion-lift">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
                   About you
@@ -552,7 +556,7 @@ const ProfilePage = () => {
                   id="bio"
                   rows={4}
                   {...register("bio")}
-                  className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 focus:border-(--color-brand) focus:ring-2 focus:ring-blue-100 transition"
                   placeholder="Share your experience, passions, and what you’re looking for at events."
                 />
               </div>
@@ -562,14 +566,14 @@ const ProfilePage = () => {
               <button
                 type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="inline-flex justify-center py-2 px-4 border border-slate-300 text-slate-700 text-sm font-medium rounded-md bg-white hover:bg-slate-50"
+                className="motion-press inline-flex justify-center py-2 px-4 border border-slate-300 text-slate-700 text-sm font-medium rounded-md bg-white hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-600 disabled:opacity-50 disabled:cursor-not-allowed items-center"
+                className="motion-press inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand) disabled:opacity-50 disabled:cursor-not-allowed items-center"
               >
                 {isLoading ? (
                   <span className="flex items-center">

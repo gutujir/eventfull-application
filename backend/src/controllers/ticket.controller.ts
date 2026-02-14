@@ -24,8 +24,13 @@ export const purchaseTicket = async (req: Request, res: Response) => {
 export const validateTicket = async (req: Request, res: Response) => {
   try {
     const { qrCode, eventId } = validateTicketSchema.parse(req.body);
+    const creatorId = (req as any).userId;
 
-    const ticket = await ticketService.validateTicket(qrCode, eventId);
+    const ticket = await ticketService.validateTicket(
+      qrCode,
+      eventId,
+      creatorId,
+    );
     res
       .status(200)
       .json({ success: true, message: "Ticket valid and scanned", ticket });
@@ -60,9 +65,18 @@ export const getTicketById = async (req: Request, res: Response) => {
       return;
     }
 
-    const ticket = await ticketService.getTicketById(id);
+    const userId = (req as any).userId;
+    const role = (req as any).user?.role;
+    const ticket = await ticketService.getTicketById(id, {
+      userId,
+      role,
+    });
     res.status(200).json({ success: true, ticket });
   } catch (error: any) {
+    if (error.message?.toLowerCase().includes("unauthorized")) {
+      res.status(403).json({ success: false, error: error.message });
+      return;
+    }
     res.status(404).json({ success: false, error: error.message });
   }
 };

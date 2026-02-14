@@ -23,13 +23,26 @@ export const redisOptions: RedisOptions = {
   // We can force TLS if needed, but let's rely on the URL scheme first.
 };
 
-const redis = new IORedis(REDIS_URL, redisOptions);
+const isTestEnv = process.env.NODE_ENV === "test";
 
-redis.on("error", (err: Error) => {
-  console.warn("Redis error:", err?.message || err);
-});
-redis.on("connect", () => {
-  console.info("Redis client connected");
-});
+const redis: any = isTestEnv
+  ? {
+      on: () => undefined,
+      ping: async () => "PONG",
+      get: async () => null,
+      set: async () => "OK",
+      del: async () => 0,
+      incr: async () => 1,
+    }
+  : new IORedis(REDIS_URL, redisOptions);
+
+if (!isTestEnv) {
+  redis.on("error", (err: Error) => {
+    console.warn("Redis error:", err?.message || err);
+  });
+  redis.on("connect", () => {
+    console.info("Redis client connected");
+  });
+}
 
 export default redis;

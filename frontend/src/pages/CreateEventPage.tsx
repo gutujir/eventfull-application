@@ -15,31 +15,41 @@ import {
   FaImage,
 } from "react-icons/fa";
 
-const eventSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  location: z.string().min(3, "Location must be at least 3 characters"),
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: "Invalid date format",
-  }),
-  price: z.number().min(0, "Price must be non-negative"),
-  currency: z.string(),
-  capacity: z.number().int().positive().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
-  isPublic: z.boolean().default(true),
-  ticketTypes: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Ticket name is required"),
-        price: z.number().min(0, "Price must be non-negative"),
-        capacity: z.number().int().positive().optional(),
-        description: z.string().optional(),
-      }),
-    )
-    .optional(),
-});
+const eventSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    location: z.string().min(3, "Location must be at least 3 characters"),
+    date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    }),
+    endDateTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid end date format",
+    }),
+    price: z.number().min(0, "Price must be non-negative"),
+    currency: z.string(),
+    capacity: z.number().int().positive().optional(),
+    reminderOffsetMinutes: z.number().int().positive().optional(),
+    status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
+    ticketTypes: z
+      .array(
+        z.object({
+          name: z.string().min(1, "Ticket name is required"),
+          price: z.number().min(0, "Price must be non-negative"),
+          capacity: z.number().int().positive().optional(),
+          description: z.string().optional(),
+        }),
+      )
+      .min(1, "At least one ticket type is required"),
+  })
+  .refine((data) => Date.parse(data.endDateTime) > Date.parse(data.date), {
+    message: "End date/time must be after start date/time",
+    path: ["endDateTime"],
+  });
 
-type EventFormData = z.infer<typeof eventSchema>;
+type EventFormData = z.input<typeof eventSchema>;
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -56,12 +66,12 @@ const CreateEventPage = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<EventFormData>({
-    resolver: zodResolver(eventSchema) as any,
+    resolver: zodResolver(eventSchema),
     defaultValues: {
       currency: "NGN",
       price: 0,
-      ticketTypes: [],
-      isPublic: true,
+      ticketTypes: [{ name: "", price: 0, description: "" }],
+      reminderOffsetMinutes: 1440,
     },
   });
 
@@ -77,11 +87,10 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Optional: Check for CREATOR role
     if (user.role && user.role !== "CREATOR" && user.role !== "ADMIN") {
-      // toast.warn("You need a Creator account to post events.");
-      // But let's verify if the backend strictly enforces this or if we should auto-upgrade or link to upgrade.
-      // For now, let's assume valid role or handle 403 error from backend.
+      toast.error("You need a creator account to post events.");
+      navigate("/");
+      return;
     }
 
     if (isError) {
@@ -105,12 +114,21 @@ const CreateEventPage = () => {
     formData.append("description", data.description);
     formData.append("location", data.location);
     formData.append("date", new Date(data.date).toISOString());
+    formData.append("startDateTime", new Date(data.date).toISOString());
+    formData.append("endDateTime", new Date(data.endDateTime).toISOString());
     formData.append("price", data.price.toString());
     formData.append("currency", data.currency);
     formData.append("status", data.status || "DRAFT");
 
     if (data.capacity) {
       formData.append("capacity", data.capacity.toString());
+    }
+
+    if (data.reminderOffsetMinutes) {
+      formData.append(
+        "reminderOffsetMinutes",
+        data.reminderOffsetMinutes.toString(),
+      );
     }
 
     if (data.ticketTypes) {
@@ -121,17 +139,16 @@ const CreateEventPage = () => {
       formData.append("image", selectedImage);
     }
 
-    // Safe access to isPublic with fallback
-    formData.append("isPublic", String(data.isPublic ?? true));
+    formData.append("isPublic", "true");
 
     dispatch(createEvent(formData));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-(--color-bg) py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-          <div className="bg-indigo-600 px-6 py-8">
+        <div className="bg-white shadow-(--shadow-elevated) rounded-2xl overflow-hidden motion-lift">
+          <div className="bg-(--color-brand) px-6 py-8">
             <h2 className="text-3xl font-extrabold text-white">
               Create New Event
             </h2>
@@ -148,7 +165,7 @@ const CreateEventPage = () => {
                 </span>
               </label>
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden">
+                <label className="motion-lift flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6 w-full h-full">
                     {selectedImage ? (
                       <div className="relative w-full h-full flex flex-col items-center justify-center group">
@@ -195,7 +212,7 @@ const CreateEventPage = () => {
                 <input
                   type="text"
                   {...register("title")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.title ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.title ? "border-red-300" : ""}`}
                   placeholder="e.g. Summer Music Festival"
                 />
                 {errors.title && (
@@ -212,7 +229,7 @@ const CreateEventPage = () => {
                 <textarea
                   {...register("description")}
                   rows={4}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.description ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.description ? "border-red-300" : ""}`}
                   placeholder="Tell people what your event is about..."
                 />
                 {errors.description && (
@@ -231,7 +248,7 @@ const CreateEventPage = () => {
                 <input
                   type="text"
                   {...register("location")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.location ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.location ? "border-red-300" : ""}`}
                   placeholder="Venue or Online Link"
                 />
                 {errors.location && (
@@ -250,11 +267,30 @@ const CreateEventPage = () => {
                 <input
                   type="datetime-local"
                   {...register("date")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.date ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.date ? "border-red-300" : ""}`}
                 />
                 {errors.date && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.date.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <span className="flex items-center">
+                    <FaCalendarAlt className="mr-2 text-gray-400" /> End Date &
+                    Time
+                  </span>
+                </label>
+                <input
+                  type="datetime-local"
+                  {...register("endDateTime")}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.endDateTime ? "border-red-300" : ""}`}
+                />
+                {errors.endDateTime && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.endDateTime.message}
                   </p>
                 )}
               </div>
@@ -270,7 +306,7 @@ const CreateEventPage = () => {
                   type="number"
                   step="0.01"
                   {...register("price", { valueAsNumber: true })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition"
                 />
                 {errors.price && (
                   <p className="mt-1 text-sm text-red-600">
@@ -286,8 +322,22 @@ const CreateEventPage = () => {
                 <input
                   type="number"
                   {...register("capacity", { valueAsNumber: true })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition"
                   placeholder="e.g. 100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Default Reminder (Minutes Before Event)
+                </label>
+                <input
+                  type="number"
+                  {...register("reminderOffsetMinutes", {
+                    valueAsNumber: true,
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition"
+                  placeholder="e.g. 1440 (1 day)"
                 />
               </div>
 
@@ -297,7 +347,7 @@ const CreateEventPage = () => {
                 </label>
                 <select
                   {...register("status")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition"
                 >
                   <option value="DRAFT">Draft (Not visible to public)</option>
                   <option value="PUBLISHED">
@@ -310,39 +360,30 @@ const CreateEventPage = () => {
                   </p>
                 )}
               </div>
-
-              <div className="flex items-center pl-1 pt-8">
-                <input
-                  id="isPublic"
-                  type="checkbox"
-                  {...register("isPublic")}
-                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="isPublic"
-                  className="ml-2 block text-sm font-medium text-gray-700"
-                >
-                  List Publicly (Appears in search)
-                </label>
-              </div>
             </div>
 
             {/* Ticket Types Section */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Ticket Types (Optional)
+                  Ticket Types (Required)
                 </h3>
                 <button
                   type="button"
                   onClick={() =>
                     append({ name: "", price: 0, description: "" })
                   }
-                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="motion-press inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand)"
                 >
                   <FaPlus className="mr-1" /> Add Ticket Type
                 </button>
               </div>
+
+              {errors.ticketTypes?.message && (
+                <p className="mb-3 text-sm text-red-600">
+                  {errors.ticketTypes.message}
+                </p>
+              )}
 
               <div className="space-y-4">
                 {fields.map((field, index) => (
@@ -385,7 +426,9 @@ const CreateEventPage = () => {
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-red-500 hover:text-red-700 p-2"
+                      aria-label="Remove ticket type"
+                      title="Remove ticket type"
+                      className="motion-press text-red-500 hover:text-red-700 p-2"
                     >
                       <FaTrash />
                     </button>
@@ -399,14 +442,14 @@ const CreateEventPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/")}
-                  className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
+                  className="motion-press bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand) mr-3"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="motion-press inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-(--color-brand) hover:bg-(--color-brand-hover) focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand) disabled:opacity-50"
                 >
                   {isLoading ? "Creating..." : "Create Event"}
                 </button>
