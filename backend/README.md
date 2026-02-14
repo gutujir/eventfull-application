@@ -1,182 +1,127 @@
 # Eventfull Backend API
 
-**🔗 Live API Base URL:** [https://eventfull-application-backend.onrender.com](https://eventfull-application-backend.onrender.com)
+The robust server-side application powering the Eventfull platform. Built with Node.js, Express, and TypeScript, it follows a strict layered architecture to ensure scalability, maintainability, and type safety.
 
-Eventfull is a comprehensive event ticketing platform that allows users to discover events, purchase tickets, and manage their schedules. This repository contains the backend API documentation, setup instructions, and architecture details.
+## 🏗 Architecture
 
-## 🚀 Features
+The backend implements a **Layered Architecture** pattern to separate concerns:
 
-- **Authentication & Authorization:**
-  - Secure User & Creator Signup/Login via JWT (Bearer Token & Cookies).
-  - Role-Based Access Control (RBAC): `ADMIN`, `CREATOR`, `EVENTEE`.
-- **Event Management:**
-  - Create, Update (Publish/Draft/Cancel), and View Events.
-  - Rich metadata support (Title, Description, Date, Price, Ticket Types).
-  - **Visibility Control:** Creators can toggle public visibility on published events.
-  - **Caching Layer:** Redis caching for public event feeds for high performance.
-- **Ticketing System:**
-  - Purchase Tickets with varying types (VIP, Regular, etc.).
-  - **QR Code Generation:** Instant QR code generation for ticket validation.
-  - Ticket Validation Endpoint for Creators/Gatekeepers.
-- **Payments:**
-  - Full **Paystack Integration**.
-  - Secure Payment Initialization and Verification.
-  - Webhooks for async status updates.
-  - Financial dashboards for Creators (Earnings) and Users (Purchase History).
-- **Notifications & Reminders:**
-  - Automated Job Queue (BullMQ + Redis) for scheduling reminders.
-  - **Email Integration:** Email notifications via Mailtrap/SMTP (Nodemailer).
-  - Auto-scheduled default reminders set by Creators.
-  - Custom reminders for eventees (My Reminders list).
-- **Analytics:**
-  - Creator Dashboard for Sales, Revenue, and Attendee metrics.
-- **Shareability:**
-  - Public endpoints for sharing events on social media.
-- **Documentation:**
-  - Auto-generated Swagger/OpenAPI documentation.
+1.  **Presentation Layer (Routes & Controllers)**: Handles HTTP requests, validation, and serialization.
+2.  **Service Layer**: Contains business logic, independent of the database or HTTP framework.
+3.  **Data Access Layer (DAL)**: Exclusively interacts with the database via Prisma ORM.
 
-## 🛠️ Tech Stack
+Additionally, it uses **Event-Driven Architecture** for background tasks (email reminders) using Redis and BullMQ.
 
-- **Runtime:** Node.js (TypeScript)
-- **Framework:** Express.js
-- **Database:** PostgreSQL
-- **ORM:** Prisma
-- **Caching & Queues:** Redis, BullMQ
-- **Authentication:** JSON Web Tokens (JWT)
-- **Payments:** Paystack API
-- **Emails:** Nodemailer (SMTP)
-- **Validation:** Zod
-- **Testing:** Jest, Supertest
+## 🛠 Tech Stack
 
-## 📋 Prerequisites
+- **Core**: Node.js, Express.js, TypeScript
+- **Database**: PostgreSQL 16+
+- **ORM**: Prisma
+- **Caching & Queuing**: Redis, BullMQ
+- **Authentication**: JWT (JSON Web Tokens), BCrypt
+- **Validation**: Zod
+- **Payments**: Paystack SDK
+- **Asset Storage**: Cloudinary
+- **Documentation**: Swagger UI (OpenAPI 3.0)
+- **Testing**: Jest, Supertest
 
-Ensure you have the following installed locally:
+## 📂 Project Structure
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [PostgreSQL](https://www.postgresql.org/)
-- [Redis](https://redis.io/)
+```text
+backend/
+├── prisma/                 # Database schema (schema.prisma) and migrations
+├── src/
+│   ├── app.ts              # Express application configuration
+│   ├── server.ts           # Server entry point (starts listening)
+│   ├── config/             # Environment configurations
+│   ├── controllers/        # HTTP Request Handlers (Req/Res logic)
+│   ├── dal/                # Data Access Layer (Database queries)
+│   ├── services/           # Business Logic Layer
+│   ├── routes/             # API Route definitions
+│   ├── middlewares/        # Express middlewares (Auth, rate-limiting)
+│   ├── schemas/            # Zod validation schemas
+│   ├── lib/                # Third-party service wrappers (Redis, Cloudinary)
+│   ├── jobs/               # Cron job definitions using Node-Cron
+│   ├── queues/             # BullMQ queue definitions
+│   ├── workers/            # BullMQ worker processors
+│   ├── swagger-docs/       # OpenAPI definitions
+│   ├── types/              # TypeScript type definitions
+│   └── utils/              # Shared utility functions
+└── tests/                  # Test suites
+    ├── unit/               # Unit tests for services/utils
+    └── integration/        # API Integration tests (Supertest)
+```
 
-## ⚙️ Installation & Setup
+## 🚀 Getting Started
 
-1.  **Clone the repository:**
+### Prerequisites
 
-    ```bash
-    git clone <repository_url>
-    cd eventfull-application/backend
-    ```
+- Node.js (v18+)
+- PostgreSQL running locally or in cloud
+- Redis server running locally
 
-2.  **Install dependencies:**
+### Installation
+
+1.  **Install Dependencies**
 
     ```bash
     npm install
     ```
 
-3.  **Environment Configuration:**
-
-    Create a `.env` file in the root directory and configure the following variables:
+2.  **Environment Configuration**
+    Create a `.env` file in the `backend` directory:
 
     ```env
-    # Server Configuration
     PORT=3000
-    NODE_ENV=development
-    FRONTEND_URL="http://localhost:5173"  # Adjust for production
-
-    # Database
-    DATABASE_URL="postgresql://user:password@localhost:5432/eventfull_db?schema=public"
-
-    # Authentication
-    JWT_SECRET="your_very_secure_jwt_secret"
-    REFRESH_TOKEN_SECRET="your_refresh_token_secret"
-    ACCESS_TOKEN_EXPIRES_IN=1h
-    REFRESH_TOKEN_EXPIRES_IN=30d
-
-    # Redis (For Caching & Queues)
-    REDIS_URL="redis://127.0.0.1:6379"
-
-    # Payments (Paystack)
-    PAYSTACK_SECRET_KEY="sk_test_xxxxxx"
-
-    # Email Service (Mailtrap/SMTP)
-    SMTP_HOST="sandbox.smtp.mailtrap.io"
-    SMTP_PORT=2525
-    SMTP_USER="your_mailtrap_user"
-    SMTP_PASS="your_mailtrap_password"
-    SMTP_SECURE=false
-    SMTP_FROM="Eventfull <no-reply@eventfull.com>"
+    DATABASE_URL="postgresql://user:password@localhost:5432/eventfull_db"
+    JWT_SECRET="your_jwt_secret"
+    REDIS_URL="redis://localhost:6379"
+    PAYSTACK_SECRET_KEY="sk_test_..."
+    CLOUDINARY_CLOUD_NAME="..."
+    CLOUDINARY_API_KEY="..."
+    CLOUDINARY_API_SECRET="..."
+    CLIENT_URL="http://localhost:5173"
     ```
 
-4.  **Database Migration:**
-
-    Run the migrations to set up your PostgreSQL schema:
+3.  **Database Setup**
 
     ```bash
+    # Run migrations to set up schema
     npx prisma migrate dev --name init
     ```
 
-5.  **Start the Server:**
-    - **Development Mode:**
-      ```bash
-      npm run dev
-      ```
-    - **Production Build:**
-      ```bash
-      npm run build
-      npm start
-      ```
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+
+## 📜 Scripts
+
+| Script                     | Description                                     |
+| :------------------------- | :---------------------------------------------- |
+| `npm run dev`              | Starts the server in watch mode using `tsx`     |
+| `npm run build`            | Compiles TypeScript to JavaScript (dist folder) |
+| `npm start`                | Runs the compiled code from `dist/server.js`    |
+| `npm run lint`             | Runs ESLint for code quality checks             |
+| `npm run test:unit`        | Runs unit tests using Jest                      |
+| `npm run test:integration` | Runs integration tests                          |
 
 ## 📚 API Documentation
 
-Once the server is running, you can access the full interactive Swagger documentation at:
-
-```
-http://localhost:3000/api-docs
-```
-
-## 🗄️ Database Schema
-
-For a visual representation of the database structure, relationships, and constraints, please refer to our ERD:
-
-- **[View Database Diagram (dbdiagram.io)](https://dbdiagram.io/d/TodoPro-App-ERD-68da5746d2b621e4225edbdc)**
+When the server is running, visit the interactive Swagger documentation at:
+**`http://localhost:3000/api-docs`**
 
 ## 🧪 Testing
 
-To run the automated test suite (Unit & Integration tests):
+We use **Jest** for testing framework and **Supertest** for HTTP assertions.
+
+- **Unit Tests**: Test individual services and utility functions in isolation.
+- **Integration Tests**: Test the full request lifecycle from Route -> Controller -> Service -> Database.
 
 ```bash
+# Run all tests
 npm test
+
+# Run only integration tests
+npm run test:integration
 ```
-
-## 🔄 Background Workers
-
-This application uses **BullMQ** to handle background tasks (like sending reminder emails).
-
-- Ensure **Redis** is running.
-- The worker is initialized automatically when the server starts in `src/server.ts` via `src/workers/reminder.worker.ts`.
-
-## 📂 Project Structure
-
-```
-src/
-├── config/         # Environment & Service configurations
-├── controllers/    # Request handlers
-├── dal/            # Data Access Layer (Prisma queries)
-├── jobs/           # Job definitions
-├── lib/            # Shared libraries (Prisma, Redis client)
-├── middlewares/    # Auth, Validation, Error Handling
-├── queues/         # BullMQ queue setup
-├── routes/         # API Route definitions
-├── schemas/        # Zod validation schemas
-├── services/       # Business logic (Payment, Email, Ticket, Event)
-├── swagger-docs/   # OpenAPI definitions
-├── workers/        # Background job processors
-├── tests/          # Jest tests
-└── app.ts          # Express App setup
-```
-
-## 🤝 Contributing
-
-1.  Fork the repository.
-2.  Create a feature branch (`git checkout -b feature/amazing-feature`).
-3.  Commit your changes.
-4.  Push to the branch.
-5.  Open a Pull Request.

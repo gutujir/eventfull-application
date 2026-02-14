@@ -49,11 +49,10 @@ export function createBearerAuthMiddleware(options: BearerAuthOptions = {}) {
       }
     }
 
-    // 3. Authorization Check
-    let token = "";
-
-    // Priority 1: Authorization Header
+    // 3. Authorization Check (header first, then cookie fallback)
     const authHeader = req.headers["authorization"];
+    let headerToken: string | null = null;
+    const cookieToken: string | null = req.cookies?.token || null;
 
     if (authHeader) {
       const parts = authHeader.split(" ");
@@ -63,14 +62,10 @@ export function createBearerAuthMiddleware(options: BearerAuthOptions = {}) {
           .json({ success: false, message: "Invalid authorization format" });
         return;
       }
-      token = parts[1];
+      headerToken = parts[1];
     }
-    // Priority 2: Cookie fallback (if header is missing)
-    else if (req.cookies && req.cookies.token) {
-      token = req.cookies.token;
-    }
-    // No token found
-    else {
+
+    if (!headerToken && !cookieToken) {
       res.status(401).json({ success: false, message: "No token provided" });
       return;
     }
@@ -84,25 +79,28 @@ export function createBearerAuthMiddleware(options: BearerAuthOptions = {}) {
       return;
     }
 
-    try {
-      const decoded = jwt.verify(token, secret) as TokenPayload;
-
-      // Basic validation of decoded token structure
-      if (!decoded || typeof decoded !== "object") {
-        throw new Error("Invalid token payload");
+    const verify = (token: string | null): TokenPayload | null => {
+      if (!token) return null;
+      try {
+        const decoded = jwt.verify(token, secret) as TokenPayload;
+        if (!decoded || typeof decoded !== "object") return null;
+        return decoded;
+      } catch {
+        return null;
       }
+    };
 
-      // Attach to request
-      req.user = decoded;
-      // Set userId for backward compatibility with controllers expecting req.userId
-      req.userId = decoded.userId;
+    const decoded = verify(headerToken) || verify(cookieToken);
 
-      next();
-    } catch (err) {
+    if (!decoded) {
       res
         .status(401)
         .json({ success: false, message: "Invalid or expired token" });
       return;
     }
+
+    req.user = decoded;
+    req.userId = decoded.userId;
+    next();
   };
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as ticketController from "../controllers/ticket.controller";
 import { verifyToken } from "../middlewares/verifyToken";
 import { requireCreator } from "../middlewares/checkRole";
+import { rateLimitTicketValidate } from "../middlewares/sensitiveRateLimiter";
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.post(
   "/validate",
   verifyToken,
   requireCreator,
+  rateLimitTicketValidate,
   ticketController.validateTicket,
 );
 

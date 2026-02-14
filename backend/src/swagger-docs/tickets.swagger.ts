@@ -122,6 +122,10 @@ export const ticketsSwagger = {
             },
           },
         },
+        403: {
+          description: "Forbidden",
+          content: { "application/json": { schema: ErrorResponse } },
+        },
         404: {
           description: "Not found",
           content: { "application/json": { schema: ErrorResponse } },

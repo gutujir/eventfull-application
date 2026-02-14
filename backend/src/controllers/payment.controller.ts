@@ -1,7 +1,27 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
 import * as paymentService from "../services/payment.service";
 import { initializePaymentSchema } from "../schemas/payment.schema";
 import * as authDal from "../dal/auth.dal";
+
+export const isValidPaystackSignature = (
+  rawBody: string,
+  signature: string | undefined,
+  secret = process.env.PAYSTACK_SECRET_KEY,
+) => {
+  if (!secret || !signature || !rawBody) return false;
+
+  const expected = crypto
+    .createHmac("sha512", secret)
+    .update(rawBody)
+    .digest("hex");
+
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  const signatureBuffer = Buffer.from(signature, "utf8");
+
+  if (expectedBuffer.length !== signatureBuffer.length) return false;
+  return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+};
 
 export const initializePayment = async (req: Request, res: Response) => {
   try {
@@ -33,10 +53,15 @@ export const initializePayment = async (req: Request, res: Response) => {
 };
 
 export const verifyPaymentWebhook = async (req: Request, res: Response) => {
-  // Handle Webhook from Provider
-  // Validate Paystack signature here using process.env.PAYSTACK_SECRET_KEY
-  // const hash = crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
-  // if (hash == req.headers['x-paystack-signature']) { ... }
+  const signature = req.headers["x-paystack-signature"] as string | undefined;
+  const rawBody = (req as any).rawBody as string | undefined;
+
+  if (!isValidPaystackSignature(rawBody || "", signature)) {
+    res
+      .status(401)
+      .json({ success: false, error: "Invalid webhook signature" });
+    return;
+  }
 
   const reference = req.body.data?.reference;
   if (reference) {

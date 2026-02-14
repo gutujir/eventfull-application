@@ -33,6 +33,13 @@ export const markReminderAsSent = async (id: string) => {
   });
 };
 
+export const findReminderById = async (id: string) => {
+  return await prisma.reminder.findUnique({
+    where: { id },
+    include: { user: true, event: true },
+  });
+};
+
 export const findRemindersByUser = async (userId: string) => {
   return await prisma.reminder.findMany({
     where: { userId },

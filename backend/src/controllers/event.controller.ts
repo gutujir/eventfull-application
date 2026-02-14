@@ -19,6 +19,15 @@ export const createEvent = async (req: Request, res: Response) => {
       delete bodyData.capacity;
     }
 
+    if (
+      bodyData.reminderOffsetMinutes !== undefined &&
+      bodyData.reminderOffsetMinutes !== ""
+    ) {
+      bodyData.reminderOffsetMinutes = Number(bodyData.reminderOffsetMinutes);
+    } else if (bodyData.reminderOffsetMinutes === "") {
+      delete bodyData.reminderOffsetMinutes;
+    }
+
     if (bodyData.isPublic !== undefined) {
       if (typeof bodyData.isPublic === "string") {
         bodyData.isPublic = bodyData.isPublic === "true";
@@ -44,8 +53,17 @@ export const createEvent = async (req: Request, res: Response) => {
       return;
     }
 
+    const normalizedStartDate = new Date(
+      validatedData.startDateTime || validatedData.date,
+    );
+
     const eventData: any = {
       ...validatedData,
+      date: normalizedStartDate,
+      startDateTime: normalizedStartDate,
+      ...(validatedData.endDateTime
+        ? { endDateTime: new Date(validatedData.endDateTime) }
+        : {}),
       slug:
         validatedData.title.toLowerCase().replace(/ /g, "-") + "-" + Date.now(), // Simple slug generation
       creator: { connect: { id: userId } },
@@ -240,11 +258,23 @@ export const updateEvent = async (req: Request, res: Response) => {
     ) {
       if (bodyData.price) bodyData.price = Number(bodyData.price);
       if (bodyData.capacity) bodyData.capacity = Number(bodyData.capacity);
+      if (bodyData.reminderOffsetMinutes !== undefined) {
+        bodyData.reminderOffsetMinutes = Number(bodyData.reminderOffsetMinutes);
+      }
     }
 
     // Normalize boolean fields (applies to both JSON and multipart)
     if (typeof bodyData.isPublic === "string") {
       bodyData.isPublic = bodyData.isPublic === "true";
+    }
+
+    if (
+      bodyData.reminderOffsetMinutes !== undefined &&
+      bodyData.reminderOffsetMinutes !== ""
+    ) {
+      bodyData.reminderOffsetMinutes = Number(bodyData.reminderOffsetMinutes);
+    } else if (bodyData.reminderOffsetMinutes === "") {
+      delete bodyData.reminderOffsetMinutes;
     }
 
     const updateData = bodyData;
@@ -266,6 +296,18 @@ export const updateEvent = async (req: Request, res: Response) => {
 
     if (updateData.date) {
       updateData.date = new Date(updateData.date);
+      if (!updateData.startDateTime) {
+        updateData.startDateTime = updateData.date;
+      }
+    }
+
+    if (updateData.startDateTime) {
+      updateData.startDateTime = new Date(updateData.startDateTime);
+      updateData.date = updateData.startDateTime;
+    }
+
+    if (updateData.endDateTime) {
+      updateData.endDateTime = new Date(updateData.endDateTime);
     }
 
     if (req.file) {

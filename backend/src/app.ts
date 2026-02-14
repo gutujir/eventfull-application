@@ -44,7 +44,6 @@ app.use(
 app.use(cookieParser());
 
 // Rate Limiter setup
-// const redisClient = new Redis(); // Removed locals instantiation in favor of shared lib/redis client
 
 // Default to an in-memory rate limiter; we'll try to switch to Redis if available
 let rateLimiter: any = new RateLimiterMemory({ points: 100, duration: 60 });
@@ -60,15 +59,22 @@ redisClient
     });
     console.info("Rate limiter now using Redis");
   })
-  .catch((err) => {
+  .catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
     console.warn(
       "Redis ping failed, continuing with in-memory rate limiter:",
-      err.message || err,
+      message,
     );
   });
 
-// parse JSON request bodies
-app.use(express.json());
+// parse JSON request bodies (capture raw body for webhook signature verification)
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      (req as any).rawBody = buf.toString();
+    },
+  }),
+);
 
 // parse application/x-www-form-urlencoded (HTML form submissions)
 app.use(express.urlencoded({ extended: true }));

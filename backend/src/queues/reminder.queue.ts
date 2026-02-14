@@ -27,10 +27,12 @@ export const addReminderJob = async (payload: {
     "send-reminder",
     {
       reminderId: payload.reminderId,
+      scheduledAt: payload.scheduledAt,
       userEmail: payload.userEmail,
       eventTitle: payload.eventTitle,
     },
     {
+      jobId: payload.reminderId,
       delay,
       attempts: 3,
       removeOnComplete: true,

@@ -80,6 +80,8 @@ model Event {
   description String
   location    String
   date        DateTime
+  startDateTime DateTime?
+  endDateTime DateTime?
   imageUrl    String?  // For "Shareability" thumbnails
   price       Decimal  @default(0.0) // Base price (for single-tier events)
   currency    String   @default("NGN")
