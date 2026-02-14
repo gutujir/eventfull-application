@@ -14,19 +14,30 @@ import {
   FaImage,
 } from "react-icons/fa";
 
-const eventSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  location: z.string().min(3, "Location must be at least 3 characters"),
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: "Invalid date format",
-  }),
-  price: z.number().min(0, "Price must be non-negative"),
-  currency: z.string(),
-  capacity: z.number().int().positive().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]),
-  // ticketTypes omitted for simplicity in update for now, or handled if returned by API
-});
+const eventSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    location: z.string().min(3, "Location must be at least 3 characters"),
+    date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    }),
+    endDateTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid end date format",
+    }),
+    price: z.number().min(0, "Price must be non-negative"),
+    currency: z.string(),
+    capacity: z.number().int().positive().optional(),
+    reminderOffsetMinutes: z.number().int().positive().optional(),
+    status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]),
+    // ticketTypes omitted for simplicity in update for now, or handled if returned by API
+  })
+  .refine((data) => Date.parse(data.endDateTime) > Date.parse(data.date), {
+    message: "End date/time must be after start date/time",
+    path: ["endDateTime"],
+  });
 
 type EventFormData = z.infer<typeof eventSchema>;
 
@@ -71,9 +82,15 @@ const EditEventPage = () => {
       const date = new Date(event.date);
       const formattedDate = date.toISOString().slice(0, 16);
       setValue("date", formattedDate);
+      const eventEndDate = event.endDateTime || event.endDate || event.date;
+      setValue(
+        "endDateTime",
+        new Date(eventEndDate).toISOString().slice(0, 16),
+      );
       setValue("price", event.price);
       setValue("currency", event.currency);
       setValue("capacity", event.capacity);
+      setValue("reminderOffsetMinutes", event.reminderOffsetMinutes);
       setValue("status", event.status as any); // Cast because existing event might have different string casing or type
     }
   }, [event, setValue]);
@@ -106,12 +123,21 @@ const EditEventPage = () => {
     formData.append("description", data.description);
     formData.append("location", data.location);
     formData.append("date", new Date(data.date).toISOString());
+    formData.append("startDateTime", new Date(data.date).toISOString());
+    formData.append("endDateTime", new Date(data.endDateTime).toISOString());
     formData.append("price", data.price.toString());
     formData.append("currency", data.currency);
     formData.append("status", data.status);
 
     if (data.capacity) {
       formData.append("capacity", data.capacity.toString());
+    }
+
+    if (data.reminderOffsetMinutes) {
+      formData.append(
+        "reminderOffsetMinutes",
+        data.reminderOffsetMinutes.toString(),
+      );
     }
 
     if (selectedImage) {
@@ -144,10 +170,10 @@ const EditEventPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-(--color-bg) py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-          <div className="bg-indigo-600 px-6 py-8">
+        <div className="bg-white shadow-(--shadow-elevated) rounded-2xl overflow-hidden motion-lift">
+          <div className="bg-(--color-brand) px-6 py-8">
             <h2 className="text-3xl font-extrabold text-white">Edit Event</h2>
             <p className="mt-2 text-indigo-100">Update your event details.</p>
           </div>
@@ -160,7 +186,7 @@ const EditEventPage = () => {
                 </span>
               </label>
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden group">
+                <label className="motion-lift flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden group">
                   <div className="flex flex-col items-center justify-center w-full h-full">
                     {selectedImage ? (
                       <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -225,7 +251,7 @@ const EditEventPage = () => {
                 <input
                   type="text"
                   {...register("title")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.title ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.title ? "border-red-300" : ""}`}
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">
@@ -241,7 +267,7 @@ const EditEventPage = () => {
                 <textarea
                   {...register("description")}
                   rows={4}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.description ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.description ? "border-red-300" : ""}`}
                 />
                 {errors.description && (
                   <p className="mt-1 text-sm text-red-600">
@@ -259,7 +285,7 @@ const EditEventPage = () => {
                 <input
                   type="text"
                   {...register("location")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.location ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.location ? "border-red-300" : ""}`}
                 />
                 {errors.location && (
                   <p className="mt-1 text-sm text-red-600">
@@ -277,11 +303,30 @@ const EditEventPage = () => {
                 <input
                   type="datetime-local"
                   {...register("date")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.date ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.date ? "border-red-300" : ""}`}
                 />
                 {errors.date && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.date.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <span className="flex items-center">
+                    <FaCalendarAlt className="mr-2 text-gray-400" /> End Date &
+                    Time
+                  </span>
+                </label>
+                <input
+                  type="datetime-local"
+                  {...register("endDateTime")}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.endDateTime ? "border-red-300" : ""}`}
+                />
+                {errors.endDateTime && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.endDateTime.message}
                   </p>
                 )}
               </div>
@@ -297,7 +342,7 @@ const EditEventPage = () => {
                   type="number"
                   step="0.01"
                   {...register("price", { valueAsNumber: true })}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.price ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.price ? "border-red-300" : ""}`}
                 />
                 {errors.price && (
                   <p className="mt-1 text-sm text-red-600">
@@ -312,7 +357,7 @@ const EditEventPage = () => {
                 </label>
                 <select
                   {...register("status")}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border ${errors.status ? "border-red-300" : ""}`}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition ${errors.status ? "border-red-300" : ""}`}
                 >
                   <option value="DRAFT">Draft</option>
                   <option value="PUBLISHED">Published</option>
@@ -325,19 +370,33 @@ const EditEventPage = () => {
                   </p>
                 )}
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Default Reminder (Minutes Before Event)
+                </label>
+                <input
+                  type="number"
+                  {...register("reminderOffsetMinutes", {
+                    valueAsNumber: true,
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-(--color-brand) focus:ring-(--color-brand) sm:text-sm p-3 border transition"
+                  placeholder="e.g. 1440 (1 day)"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end pt-5">
               <button
                 type="button"
                 onClick={() => navigate("/my-events")}
-                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
+                className="motion-press bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand) mr-3"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="motion-press inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-(--color-brand) hover:bg-(--color-brand-hover) focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-brand)"
               >
                 <FaSave className="mr-2" /> Save Changes
               </button>

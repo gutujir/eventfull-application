@@ -5,17 +5,22 @@ import { purchaseTicket, reset } from "../../features/tickets/ticketSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { isEventEnded } from "../../utils/eventStatus";
 
 interface PurchaseTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: any;
+  isBookingDisabled?: boolean;
+  bookingDisabledReason?: string;
 }
 
 const PurchaseTicketModal = ({
   isOpen,
   onClose,
   event,
+  isBookingDisabled = false,
+  bookingDisabledReason,
 }: PurchaseTicketModalProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -58,6 +63,18 @@ const PurchaseTicketModal = ({
 
   if (!isOpen || !event) return null;
 
+  const userIsCreator = user?.role === "CREATOR";
+  const eventEnded = isEventEnded(event);
+  const resolvedBookingDisabled =
+    isBookingDisabled || userIsCreator || eventEnded;
+  const resolvedDisabledReason =
+    bookingDisabledReason ||
+    (eventEnded
+      ? "This event has ended. Ticket booking is closed."
+      : userIsCreator
+        ? "Creators cannot purchase tickets."
+        : "Booking is currently unavailable.");
+
   const handleIncrement = () => {
     if (quantity < 10) setQuantity((prev) => prev + 1);
   };
@@ -67,6 +84,11 @@ const PurchaseTicketModal = ({
   };
 
   const handlePurchase = async () => {
+    if (resolvedBookingDisabled) {
+      toast.info(resolvedDisabledReason);
+      return;
+    }
+
     const ticketData = {
       eventId: event.id,
       ticketTypeId: selectedTicketTypeId, // Optional if no types
@@ -127,12 +149,20 @@ const PurchaseTicketModal = ({
           <button
             onClick={onClose}
             className="text-white hover:text-indigo-200 transition"
+            aria-label="Close purchase modal"
+            title="Close purchase modal"
           >
             <FaTimes size={24} />
           </button>
         </div>
 
         <div className="p-6">
+          {resolvedBookingDisabled && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {resolvedDisabledReason}
+            </div>
+          )}
+
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
             {event.title}
           </h3>
@@ -169,6 +199,7 @@ const PurchaseTicketModal = ({
                           onChange={(e) =>
                             setSelectedTicketTypeId(e.target.value)
                           }
+                          disabled={resolvedBookingDisabled}
                           className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                         />
                         <span className="ml-3 font-medium text-gray-900">
@@ -201,7 +232,9 @@ const PurchaseTicketModal = ({
                 <button
                   onClick={handleDecrement}
                   className="p-2 rounded-md bg-white shadow-sm hover:bg-gray-100 text-gray-600 disabled:opacity-50 transition"
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 1 || resolvedBookingDisabled}
+                  aria-label="Decrease quantity"
+                  title="Decrease quantity"
                 >
                   <FaMinus size={12} />
                 </button>
@@ -211,7 +244,9 @@ const PurchaseTicketModal = ({
                 <button
                   onClick={handleIncrement}
                   className="p-2 rounded-md bg-white shadow-sm hover:bg-gray-100 text-gray-600 disabled:opacity-50 transition"
-                  disabled={quantity >= 10}
+                  disabled={quantity >= 10 || resolvedBookingDisabled}
+                  aria-label="Increase quantity"
+                  title="Increase quantity"
                 >
                   <FaPlus size={12} />
                 </button>
@@ -230,7 +265,7 @@ const PurchaseTicketModal = ({
 
           <button
             onClick={handlePurchase}
-            disabled={isLoading}
+            disabled={isLoading || resolvedBookingDisabled}
             className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transform active:scale-95 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
@@ -238,6 +273,8 @@ const PurchaseTicketModal = ({
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
                 Processing...
               </>
+            ) : resolvedBookingDisabled ? (
+              "Booking Unavailable"
             ) : (
               "Confirm Purchase"
             )}

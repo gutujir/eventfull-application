@@ -8,6 +8,7 @@ interface Ticket {
   userId: string;
   status: string;
   qrCode?: string;
+  qrCodeImage?: string;
   event?: any; // Populated event data
   ticketType?: {
     name: string;

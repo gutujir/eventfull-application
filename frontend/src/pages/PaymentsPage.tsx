@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Card from "../components/ui/Card";
+import SectionHeader from "../components/ui/SectionHeader";
 
 const PaymentsPage = () => {
   const [payments, setPayments] = useState<any[]>([]);
@@ -23,13 +25,14 @@ const PaymentsPage = () => {
   }, []);
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-8 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-6 pb-12">
+      <div className="max-w-7xl mx-auto px-1 sm:px-2">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">Payments</h1>
-          <p className="text-sm text-gray-500">
-            View payments for your events.
-          </p>
+          <SectionHeader
+            eyebrow="Revenue"
+            title="Payments"
+            subtitle="View and reconcile payments across your events."
+          />
         </div>
 
         {isLoading ? (
@@ -37,17 +40,17 @@ const PaymentsPage = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <Card className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {error}
-          </div>
+          </Card>
         ) : payments.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">
+          <Card className="p-8 text-center text-(--color-text-muted)">
             No payments yet.
-          </div>
+          </Card>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <Card className="overflow-hidden">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
+              <thead className="bg-slate-50 text-(--color-text-muted)">
                 <tr>
                   <th className="px-4 py-3 text-left">Event</th>
                   <th className="px-4 py-3 text-left">Payer</th>
@@ -60,15 +63,15 @@ const PaymentsPage = () => {
               <tbody className="divide-y divide-gray-100">
                 {payments.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-(--color-text) font-medium">
                       {p.event?.title || "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-3 text-(--color-text-muted)">
                       {p.user
                         ? `${p.user.first_name} ${p.user.last_name} (${p.user.email})`
                         : "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-(--color-text)">
                       {p.currency} {Number(p.amount).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
@@ -87,14 +90,14 @@ const PaymentsPage = () => {
                     <td className="px-4 py-3 font-mono text-xs text-gray-600">
                       {p.reference}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-(--color-text-muted)">
                       {new Date(p.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
       </div>
     </div>

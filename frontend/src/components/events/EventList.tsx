@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { FaCalendarAlt, FaMapMarkerAlt, FaTicketAlt } from "react-icons/fa";
 import Countdown from "../common/Countdown";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
 import type { Event } from "../../features/events/eventSlice";
+import { isEventEnded } from "../../utils/eventStatus";
 
 interface EventListProps {
   events: Event[] | null;
@@ -61,9 +64,9 @@ const EventList = ({
       {isLoading ? (
         // Skeleton Loader
         Array.from({ length: 6 }).map((_, i) => (
-          <div
+          <Card
             key={i}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 animate-pulse"
+            className="overflow-hidden border border-slate-100 animate-pulse"
           >
             <div className="h-48 bg-gray-200" />
             <div className="p-6">
@@ -75,103 +78,116 @@ const EventList = ({
                 <div className="h-4 bg-gray-200 rounded w-1/4" />
               </div>
             </div>
-          </div>
+          </Card>
         ))
       ) : isError ? (
         <div className="col-span-full text-center py-12">
           <p className="text-red-500 mb-4">{message}</p>
-          <button
-            onClick={onRetry}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Retry
-          </button>
+          <Button onClick={onRetry}>Retry</Button>
         </div>
       ) : events && events.length > 0 ? (
-        events.map((event: Event) => (
-          <Link
-            to={`/events/${event.slug || event.id}`}
-            key={event.id}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 group block"
-          >
-            <div className="h-48 bg-gray-200 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-              <img
-                src={getImageUrl(event.imageUrl)}
-                alt={event.title}
-                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center text-sm text-gray-500">
-                  <FaCalendarAlt className="mr-2 text-indigo-400" />
-                  <div>
-                    <div>
-                      {new Date(event.date).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+        events.map((event: Event) => {
+          const eventEnded = isEventEnded(event);
+
+          return (
+            <Link
+              to={`/events/${event.slug || event.id}`}
+              key={event.id}
+              className="group block"
+            >
+              <Card
+                className="overflow-hidden border-slate-100 transition-transform duration-200 group-hover:-translate-y-1"
+                elevated
+              >
+                <div className="h-48 bg-gray-200 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+                  <img
+                    src={getImageUrl(event.imageUrl)}
+                    alt={event.title}
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center text-sm text-[var(--color-text-muted)]">
+                      <FaCalendarAlt className="mr-2 text-[var(--color-brand)]" />
+                      <div>
+                        <div>
+                          {new Date(event.date).toLocaleDateString(undefined, {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                        {!eventEnded && (
+                          <Countdown targetDate={event.date} className="mt-1" />
+                        )}
+                      </div>
                     </div>
-                    <Countdown targetDate={event.date} className="mt-1" />
+                    <div className="flex items-center gap-2">
+                      {eventEnded && (
+                        <span className="text-xs font-semibold text-amber-800 bg-amber-100 px-2 py-1 rounded-md border border-amber-200">
+                          Ended
+                        </span>
+                      )}
+                      {event.creator && (
+                        <span className="text-xs font-medium text-[var(--color-brand)] bg-blue-50 px-2 py-1 rounded-md">
+                          By {event.creator.first_name}{" "}
+                          {event.creator.last_name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2 group-hover:text-[var(--color-brand)] transition-colors line-clamp-1">
+                    {event.title}
+                  </h3>
+
+                  <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-2">
+                    {event.description}
+                  </p>
+
+                  <div className="flex items-center text-sm text-[var(--color-text-muted)] mb-4">
+                    <FaMapMarkerAlt className="mr-2 text-[var(--color-brand)]" />
+                    <span className="line-clamp-1">{event.location}</span>
+                  </div>
+
+                  {event.ticketTypes && event.ticketTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {event.ticketTypes.slice(0, 2).map((ticket: any) => (
+                        <span
+                          key={ticket.id}
+                          className="text-xs bg-slate-50 text-[var(--color-text-muted)] px-2 py-1 rounded border border-slate-200"
+                        >
+                          {ticket.name}: {ticket.currency} {ticket.price}
+                        </span>
+                      ))}
+                      {event.ticketTypes.length > 2 && (
+                        <span className="text-xs bg-slate-50 text-[var(--color-text-muted)] px-2 py-1 rounded border border-slate-200">
+                          +{event.ticketTypes.length - 2} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div className="flex items-center text-[var(--color-text)] font-semibold">
+                      <FaTicketAlt className="mr-2 text-[var(--color-brand)]" />
+                      {event.price > 0
+                        ? `${event.currency} ${event.price}`
+                        : "Free"}
+                    </div>
+                    <span className="text-[var(--color-brand)] font-medium text-sm">
+                      {eventEnded ? "Booking closed" : "Book now"}
+                    </span>
                   </div>
                 </div>
-                {event.creator && (
-                  <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
-                    By {event.creator.first_name} {event.creator.last_name}
-                  </span>
-                )}
-              </div>
-
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                {event.title}
-              </h3>
-
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {event.description}
-              </p>
-
-              <div className="flex items-center text-sm text-gray-500 mb-4">
-                <FaMapMarkerAlt className="mr-2 text-indigo-400" />
-                <span className="line-clamp-1">{event.location}</span>
-              </div>
-
-              {/* Ticket Types Tags */}
-              {event.ticketTypes && event.ticketTypes.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {event.ticketTypes.slice(0, 2).map((ticket: any) => (
-                    <span
-                      key={ticket.id}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200"
-                    >
-                      {ticket.name}: {ticket.currency} {ticket.price}
-                    </span>
-                  ))}
-                  {event.ticketTypes.length > 2 && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
-                      +{event.ticketTypes.length - 2} more
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="flex items-center text-gray-900 font-bold">
-                  <FaTicketAlt className="mr-2 text-indigo-500" />
-                  {event.price > 0
-                    ? `${event.currency} ${event.price}`
-                    : "Free"}
-                </div>
-                <button className="text-indigo-600 font-medium hover:text-indigo-800 text-sm">
-                  Book Now
-                </button>
-              </div>
-            </div>
-          </Link>
-        ))
+              </Card>
+            </Link>
+          );
+        })
       ) : (
         <div className="col-span-full text-center py-12 text-gray-500">
           No events found.

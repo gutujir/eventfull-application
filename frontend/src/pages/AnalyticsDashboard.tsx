@@ -17,6 +17,8 @@ import {
   ArcElement,
 } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 ChartJS.register(
   CategoryScale,
@@ -55,14 +57,16 @@ const AnalyticsDashboard = () => {
     color: string;
     trend?: string;
   }) => (
-    <div className="bg-white overflow-hidden border border-gray-100 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
-      <div className="p-6">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <div className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className={`rounded-xl p-3 ${color}`}>{icon}</div>
             <div className="ml-4">
-              <p className="text-sm text-gray-500">{title}</p>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-sm text-(--color-text-muted)">{title}</p>
+              <p className="text-2xl font-semibold text-(--color-text)">
+                {value}
+              </p>
             </div>
           </div>
           {trend && (
@@ -72,7 +76,7 @@ const AnalyticsDashboard = () => {
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 
   // Prepare chart data
@@ -126,23 +130,23 @@ const AnalyticsDashboard = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-8 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white p-6 shadow-lg">
+    <div className="min-h-screen pt-4 pb-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8 rounded-lg bg-(--color-brand) text-white p-6 shadow-(--shadow-elevated)">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-indigo-100">
+              <p className="text-xs uppercase tracking-wide text-blue-100">
                 Creator Dashboard
               </p>
-              <h1 className="text-3xl sm:text-4xl font-extrabold">
+              <h1 className="text-3xl sm:text-4xl font-semibold">
                 Performance Overview
               </h1>
-              <p className="mt-2 text-sm text-indigo-100">
+              <p className="mt-2 text-sm text-blue-100">
                 Track sales, revenue, and attendance in real time.
               </p>
             </div>
             <div className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm">
-              <p className="text-indigo-100">Updated</p>
+              <p className="text-blue-100">Updated</p>
               <p className="font-semibold">{new Date().toLocaleDateString()}</p>
             </div>
           </div>
@@ -153,7 +157,7 @@ const AnalyticsDashboard = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           </div>
         ) : isError ? (
-          <div className="rounded-md bg-red-50 p-4 mb-4 border border-red-200">
+          <Card className="rounded-md bg-red-50 p-4 mb-4 border border-red-200">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
@@ -164,11 +168,11 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         ) : dashboardStats ? (
           <>
             {/* Stat Cards Row */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
               <StatCard
                 title="Total Events"
                 value={dashboardStats.totalEvents}
@@ -190,12 +194,24 @@ const AnalyticsDashboard = () => {
                 color="bg-gradient-to-r from-yellow-500 to-yellow-600"
                 trend="This month"
               />
+              <StatCard
+                title="Checked-In"
+                value={dashboardStats.totalAttendeesCheckedIn}
+                icon={<FaCalendarAlt className="h-6 w-6 text-white" />}
+                color="bg-gradient-to-r from-cyan-500 to-cyan-600"
+              />
+              <StatCard
+                title="Unique Buyers"
+                value={dashboardStats.totalUniqueEventeesBought}
+                icon={<FaTicketAlt className="h-6 w-6 text-white" />}
+                color="bg-gradient-to-r from-purple-500 to-purple-600"
+              />
             </div>
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-[400px] flex flex-col">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              <Card className="p-6 h-100 flex flex-col">
+                <h2 className="text-lg font-semibold text-(--color-text) mb-4">
                   Revenue per Event
                 </h2>
                 <div className="flex-1 relative">
@@ -210,10 +226,10 @@ const AnalyticsDashboard = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
 
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-[400px] flex flex-col">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              <Card className="p-6 h-100 flex flex-col">
+                <h2 className="text-lg font-semibold text-(--color-text) mb-4">
                   Ticket Sales Distribution
                 </h2>
                 <div className="flex-1 relative flex justify-center">
@@ -233,29 +249,26 @@ const AnalyticsDashboard = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             </div>
           </>
         ) : (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <Card className="text-center py-12">
+            <h3 className="mt-2 text-sm font-medium text-(--color-text)">
               No stats available
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-(--color-text-muted)">
               Get started by creating a new event.
             </p>
-          </div>
+          </Card>
         )}
 
         <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="bg-white rounded-xl border border-gray-100 p-4 text-sm text-gray-600">
+          <Card className="rounded-xl p-4 text-sm text-(--color-text-muted)">
             Tip: Keep events updated to improve conversion and ticket sales.
-          </div>
-          <Link
-            to="/events/create"
-            className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-sm font-semibold rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Create New Event
+          </Card>
+          <Link to="/events/create">
+            <Button size="lg">Create New Event</Button>
           </Link>
         </div>
       </div>

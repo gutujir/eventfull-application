@@ -7,11 +7,15 @@ export interface Event {
   title: string;
   description: string;
   date: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  endDate?: string;
   price: number;
   location: string;
   imageUrl: string;
   currency: string;
   capacity: number;
+  reminderOffsetMinutes?: number;
   status: string;
   isPublic: boolean;
   creatorId: string;

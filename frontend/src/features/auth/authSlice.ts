@@ -9,6 +9,7 @@ interface AuthState {
   user: any | null;
   token: string | null;
   isAuthenticated: boolean;
+  isAuthChecking: boolean;
   isLoading: boolean;
   isError: boolean;
   isSuccess: boolean;
@@ -22,11 +23,29 @@ const initialState: AuthState = {
   user: user ? user.user : null,
   token: user ? user.token : null,
   isAuthenticated: !!user,
+  isAuthChecking: true,
   isLoading: false,
   isError: false,
   isSuccess: false,
   message: "",
 };
+
+export const checkAuth = createAsyncThunk(
+  "auth/checkAuth",
+  async (_, thunkAPI) => {
+    try {
+      return await authService.checkAuth();
+    } catch (error: any) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  },
+);
 
 // Register user
 export const register = createAsyncThunk(
@@ -141,10 +160,27 @@ export const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       })
+      .addCase(checkAuth.pending, (state) => {
+        state.isAuthChecking = true;
+      })
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        state.isAuthChecking = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+        state.isError = false;
+        state.message = "";
+      })
+      .addCase(checkAuth.rejected, (state) => {
+        state.isAuthChecking = false;
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+      })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.isAuthChecking = false;
       })
       .addCase(updateProfile.pending, (state) => {
         state.isLoading = true;

@@ -5,6 +5,8 @@ interface DashboardStats {
   totalEvents: number;
   totalTicketsSold: number;
   totalRevenue: number;
+  totalAttendeesCheckedIn: number;
+  totalUniqueEventeesBought: number;
   eventsBreakdown: Array<{
     id: string;
     title: string;
@@ -18,6 +20,8 @@ interface EventStats {
   ticketsSold: number;
   revenue: number;
   attendeesCheckedIn: number;
+  uniqueEventeesBought: number;
+  attendanceRate: number;
 }
 
 interface AnalyticsState {
